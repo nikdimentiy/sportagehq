@@ -1091,32 +1091,24 @@
     <div class="cockpit-grid">
         <div>
             <div class="panel">
-                <div class="panel-header"><i class="fas fa-file-export"></i> Export All Data</div>
+                <div class="panel-header"><i class="fas fa-download"></i> Export Individual Records</div>
                 <div class="panel-body">
                     <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:14px;">
-                        Save a complete backup of FuelOS, MileageOS, and Maintenance data as a single JSON file.
+                        Download your records by type as separate JSON files.
                     </p>
-                    <button class="btn-primary" onclick="exportAllJSON()"><i class="fas fa-download"></i> Export Full Backup (JSON)</button>
-                    <div style="height:12px"></div>
-                    <button class="btn-sm" onclick="exportFuelJSON()" style="width:100%;justify-content:center;margin-bottom:8px;">
-                        <i class="fas fa-gas-pump"></i> Export Fuel Only (JSON)
-                    </button>
-                    <button class="btn-sm" onclick="exportMileageJSON()" style="width:100%;justify-content:center;margin-bottom:8px;">
-                        <i class="fas fa-road"></i> Export Mileage Only (JSON)
-                    </button>
-                    <button class="btn-sm" onclick="exportMaintJSON()" style="width:100%;justify-content:center;">
-                        <i class="fas fa-wrench"></i> Export Maintenance Only (JSON)
-                    </button>
+                    <button class="btn-primary" onclick="exportFuelJSON()" style="margin-bottom:8px;"><i class="fas fa-gas-pump"></i> Export Fuel Records</button>
+                    <button class="btn-primary" onclick="exportMileageJSON()" style="margin-bottom:8px;"><i class="fas fa-road"></i> Export Mileage Records</button>
+                    <button class="btn-primary" onclick="exportMaintJSON()"><i class="fas fa-wrench"></i> Export Maintenance Records</button>
                 </div>
             </div>
         </div>
 
         <div>
             <div class="panel">
-                <div class="panel-header"><i class="fas fa-file-import"></i> Import Data</div>
+                <div class="panel-header"><i class="fas fa-cloud-upload-alt"></i> Import Individual Records</div>
                 <div class="panel-body">
                     <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:18px;">
-                        Restore individual data types or a complete backup.
+                        Upload your records by type. Each file will be parsed and synced to Appwrite Cloud.
                     </p>
 
                     <!-- Separate Upload Cards -->
@@ -1144,16 +1136,6 @@
                             <div style="font-size:0.65rem;color:var(--text-3);">Upload Maintenance Records</div>
                             <input type="file" id="maintUploadInput" accept=".json" style="display:none">
                         </div>
-                    </div>
-
-                    <div style="height:1px;background:var(--border);margin:14px 0;"></div>
-
-                    <!-- Full Backup Import -->
-                    <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:10px;"><strong style="color:var(--text-1);">Or load complete backup:</strong></p>
-                    <div class="import-zone" onclick="document.getElementById('jsonImportInput').click()" style="margin-bottom:14px;">
-                        <div class="import-zone-label"><i class="fas fa-download"></i> Load Full Backup</div>
-                        <div class="import-zone-sub" id="jsonImportInfo">Click to select a JSON file</div>
-                        <input type="file" id="jsonImportInput" accept=".json" style="display:none">
                     </div>
 
                     <p style="font-size:0.75rem;color:var(--text-3);margin-bottom:12px;text-align:center;">

@@ -632,8 +632,10 @@ async function purgeAllData() {
 }
 
 function updateVaultCounts() {
-    document.getElementById('vaultFuelCount').textContent = fuelRecords.length;
-    document.getElementById('vaultMileCount').textContent = mileageData.length;
+    const fuelEl = document.getElementById('vaultFuelCount');
+    const mileEl = document.getElementById('vaultMileCount');
+    if (fuelEl) fuelEl.textContent = fuelRecords.length;
+    if (mileEl) mileEl.textContent = mileageData.length;
 }
 
 // ══════════════════════════════════════════════════

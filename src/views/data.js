@@ -24,11 +24,6 @@ export async function renderDataView() {
       }
     };
 
-    // Setup individual file upload handlers
-    setTimeout(() => {
-      setupIndividualUploads(window.currentUser.$id);
-    }, 100);
-
     const fuel = await loadFuel(window.currentUser.$id);
     const mileage = await loadMileage(window.currentUser.$id);
     const maintenance = await loadMaintenance(window.currentUser.$id);
@@ -97,94 +92,27 @@ function buildDataHTML(fuel, mileage, maintenance, userId) {
           <div class="gauge-label"><i class="fas fa-gas-pump"></i> Fuel Records</div>
           <div class="gauge-val cyan">${stats.fuel.count}</div>
           <div class="gauge-unit">$${stats.fuel.totalSpent.toFixed(0)} spent</div>
+          <button onclick="window.exportFuelJSON && window.exportFuelJSON()" style="width: 100%; margin-top: 12px; padding: 8px; background: rgba(0,229,255,0.15); border: 1px solid rgba(0,229,255,0.3); border-radius: 4px; color: var(--cyan); font-size: 0.8rem; cursor: pointer; transition: all 0.2s;">
+            <i class="fas fa-download"></i> Export
+          </button>
         </div>
         <div class="gauge emerald">
           <div class="glow"></div>
           <div class="gauge-label"><i class="fas fa-road"></i> Mileage Entries</div>
           <div class="gauge-val emerald">${stats.mileage.count}</div>
           <div class="gauge-unit">${stats.fuel.totalGallons.toFixed(1)} gal tracked</div>
+          <button onclick="window.exportMileageJSON && window.exportMileageJSON()" style="width: 100%; margin-top: 12px; padding: 8px; background: rgba(0,224,150,0.15); border: 1px solid rgba(0,224,150,0.3); border-radius: 4px; color: var(--emerald); font-size: 0.8rem; cursor: pointer; transition: all 0.2s;">
+            <i class="fas fa-download"></i> Export
+          </button>
         </div>
         <div class="gauge rose">
           <div class="glow"></div>
           <div class="gauge-label"><i class="fas fa-wrench"></i> Maintenance Records</div>
           <div class="gauge-val rose">${stats.maintenance.count}</div>
           <div class="gauge-unit">$${stats.maintenance.totalSpent.toFixed(0)} spent</div>
-        </div>
-      </div>
-
-      <!-- Export Section -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;">
-        <!-- Export Panel -->
-        <div class="panel">
-          <div class="panel-header">
-            <i class="fas fa-download"></i> Export Individual Records
-          </div>
-          <div class="panel-body">
-            <p style="color: var(--text-2); margin-bottom: 12px; font-size: 0.85rem;">
-              Download your records by type as separate JSON files.
-            </p>
-            <div style="display: grid; gap: 8px;">
-              <button onclick="window.exportFuelJSON && window.exportFuelJSON()" class="btn-primary" style="width: 100%; font-size: 0.9rem;">
-                <i class="fas fa-gas-pump"></i> Export Fuel Records
-              </button>
-              <button onclick="window.exportMileageJSON && window.exportMileageJSON()" class="btn-primary" style="width: 100%; font-size: 0.9rem;">
-                <i class="fas fa-road"></i> Export Mileage Records
-              </button>
-              <button onclick="window.exportMaintJSON && window.exportMaintJSON()" class="btn-primary" style="width: 100%; font-size: 0.9rem;">
-                <i class="fas fa-wrench"></i> Export Maintenance Records
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Separate Upload Section -->
-      <div style="margin-top: 24px; margin-bottom: 24px;">
-        <h3 style="color: var(--cyan); font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; letter-spacing: 1px;">
-          RESTORE INDIVIDUAL DATA
-        </h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
-          <!-- FuelOS Upload -->
-          <div class="panel" style="border-color: rgba(0,229,255,0.3); background: rgba(0,229,255,0.03);">
-            <div class="panel-header" style="border-bottom-color: rgba(0,229,255,0.2);">
-              <i class="fas fa-gas-pump" style="color: var(--cyan);"></i> FuelOS Upload
-            </div>
-            <div class="panel-body" style="text-align: center;">
-              <input type="file" id="fuelJsonInput" accept=".json" style="display: none;">
-              <button onclick="document.getElementById('fuelJsonInput').click()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, rgba(0,229,255,0.2), rgba(0,229,255,0.1)); border: 2px solid rgba(0,229,255,0.3); border-radius: 6px; color: var(--cyan); font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;">
-                <i class="fas fa-cloud-upload-alt"></i> Upload Fuel Records
-              </button>
-              <p style="color: var(--text-3); font-size: 0.75rem; margin-top: 8px;">Import fuel_records.json</p>
-            </div>
-          </div>
-
-          <!-- MileageOS Upload -->
-          <div class="panel" style="border-color: rgba(0,224,150,0.3); background: rgba(0,224,150,0.03);">
-            <div class="panel-header" style="border-bottom-color: rgba(0,224,150,0.2);">
-              <i class="fas fa-road" style="color: var(--emerald);"></i> MileageOS Upload
-            </div>
-            <div class="panel-body" style="text-align: center;">
-              <input type="file" id="mileageJsonInput" accept=".json" style="display: none;">
-              <button onclick="document.getElementById('mileageJsonInput').click()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, rgba(0,224,150,0.2), rgba(0,224,150,0.1)); border: 2px solid rgba(0,224,150,0.3); border-radius: 6px; color: var(--emerald); font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;">
-                <i class="fas fa-cloud-upload-alt"></i> Upload Mileage Records
-              </button>
-              <p style="color: var(--text-3); font-size: 0.75rem; margin-top: 8px;">Import mileage_records.json</p>
-            </div>
-          </div>
-
-          <!-- Maintenance Upload -->
-          <div class="panel" style="border-color: rgba(255,61,113,0.3); background: rgba(255,61,113,0.03);">
-            <div class="panel-header" style="border-bottom-color: rgba(255,61,113,0.2);">
-              <i class="fas fa-wrench" style="color: var(--rose);"></i> Maintenance Upload
-            </div>
-            <div class="panel-body" style="text-align: center;">
-              <input type="file" id="maintJsonInput" accept=".json" style="display: none;">
-              <button onclick="document.getElementById('maintJsonInput').click()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, rgba(255,61,113,0.2), rgba(255,61,113,0.1)); border: 2px solid rgba(255,61,113,0.3); border-radius: 6px; color: var(--rose); font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;">
-                <i class="fas fa-cloud-upload-alt"></i> Upload Maintenance Records
-              </button>
-              <p style="color: var(--text-3); font-size: 0.75rem; margin-top: 8px;">Import maintenance_records.json</p>
-            </div>
-          </div>
+          <button onclick="window.exportMaintJSON && window.exportMaintJSON()" style="width: 100%; margin-top: 12px; padding: 8px; background: rgba(255,61,113,0.15); border: 1px solid rgba(255,61,113,0.3); border-radius: 4px; color: var(--rose); font-size: 0.8rem; cursor: pointer; transition: all 0.2s;">
+            <i class="fas fa-download"></i> Export
+          </button>
         </div>
       </div>
 
@@ -295,106 +223,4 @@ function buildErrorHTML(title) {
       </div>
     </div>
   `;
-}
-
-function setupIndividualUploads(userId) {
-  const fuelInput = document.getElementById('fuelJsonInput');
-  const mileageInput = document.getElementById('mileageJsonInput');
-  const maintInput = document.getElementById('maintJsonInput');
-
-  if (fuelInput) {
-    fuelInput.addEventListener('change', (e) => handleIndividualUpload(e, 'fuel', userId));
-  }
-  if (mileageInput) {
-    mileageInput.addEventListener('change', (e) => handleIndividualUpload(e, 'mileage', userId));
-  }
-  if (maintInput) {
-    maintInput.addEventListener('change', (e) => handleIndividualUpload(e, 'maintenance', userId));
-  }
-}
-
-async function handleIndividualUpload(event, type, userId) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = async (ev) => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      let imported = 0;
-
-      // Import fuel records - handle both wrapped and bare array formats
-      if (type === 'fuel') {
-        let records = data.fuel || (Array.isArray(data) && data[0]?.date ? data : null);
-        if (records && Array.isArray(records)) {
-          for (const rec of records) {
-            try {
-              if (window.createFuelRecord) {
-                await window.createFuelRecord(rec);
-                imported++;
-              }
-            } catch (err) {
-              console.error('Error saving fuel record:', err);
-            }
-          }
-        }
-      }
-
-      // Import mileage records - handle both wrapped and bare array formats
-      if (type === 'mileage') {
-        let records = data.mileage || (Array.isArray(data) && data[0]?.dateTime ? data : null);
-        if (records && Array.isArray(records)) {
-          for (const rec of records) {
-            try {
-              // Extract only required fields for storage
-              const mileRecord = {
-                dateTime: rec.dateTime,
-                currentMileage: rec.currentMileage,
-              };
-              if (window.createMileageRecord) {
-                await window.createMileageRecord(mileRecord);
-                imported++;
-              }
-            } catch (err) {
-              console.error('Error saving mileage record:', err);
-            }
-          }
-        }
-      }
-
-      // Import maintenance records - handle both wrapped and bare array formats
-      if (type === 'maintenance') {
-        let records = data.maintenance || (Array.isArray(data) && data[0]?.type ? data : null);
-        if (records && Array.isArray(records)) {
-          for (const rec of records) {
-            try {
-              if (window.createMaintRecord) {
-                await window.createMaintRecord(rec);
-                imported++;
-              }
-            } catch (err) {
-              console.error('Error saving maintenance record:', err);
-            }
-          }
-        }
-      }
-
-      if (imported === 0) {
-        showToast(`No ${type} records found in file`, 'warn');
-      } else {
-        showToast(`Successfully imported ${imported} ${type} records`, 'success');
-      }
-
-      // Reload the data view to show updated counts after a delay
-      setTimeout(async () => {
-        const { render } = await import('../lib/router.js');
-        render();
-      }, 800);
-    } catch (err) {
-      console.error('Error importing file:', err);
-      showToast(`Failed to import ${type} data: ${err.message}`, 'error');
-    }
-    event.target.value = null;
-  };
-  reader.readAsText(file);
 }

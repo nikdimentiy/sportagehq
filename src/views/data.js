@@ -112,26 +112,30 @@ function buildDataHTML(fuel, mileage, maintenance, userId) {
         </div>
       </div>
 
-      <!-- Export/Import Section -->
+      <!-- Export Section -->
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;">
         <!-- Export Panel -->
         <div class="panel">
           <div class="panel-header">
-            <i class="fas fa-download"></i> Export Data
+            <i class="fas fa-download"></i> Export Individual Records
           </div>
           <div class="panel-body">
             <p style="color: var(--text-2); margin-bottom: 12px; font-size: 0.85rem;">
-              Download all your records as JSON. Keep this file safe as a backup.
+              Download your records by type as separate JSON files.
             </p>
-            <button onclick="window.exportAllJSON && window.exportAllJSON()" class="btn-primary" style="width: 100%;">
-              <i class="fas fa-file-download"></i> Export as JSON
-            </button>
-            <p style="color: var(--text-3); font-size: 0.75rem; margin-top: 10px; text-align: center;">
-              Includes fuel, mileage, and maintenance records
-            </p>
+            <div style="display: grid; gap: 8px;">
+              <button onclick="window.exportFuelJSON && window.exportFuelJSON()" class="btn-primary" style="width: 100%; font-size: 0.9rem;">
+                <i class="fas fa-gas-pump"></i> Export Fuel Records
+              </button>
+              <button onclick="window.exportMileageJSON && window.exportMileageJSON()" class="btn-primary" style="width: 100%; font-size: 0.9rem;">
+                <i class="fas fa-road"></i> Export Mileage Records
+              </button>
+              <button onclick="window.exportMaintJSON && window.exportMaintJSON()" class="btn-primary" style="width: 100%; font-size: 0.9rem;">
+                <i class="fas fa-wrench"></i> Export Maintenance Records
+              </button>
+            </div>
           </div>
         </div>
-
       </div>
 
       <!-- Separate Upload Section -->
@@ -184,24 +188,6 @@ function buildDataHTML(fuel, mileage, maintenance, userId) {
         </div>
       </div>
 
-      <!-- Import Panel -->
-      <div class="panel">
-        <div class="panel-header">
-          <i class="fas fa-upload"></i> Import Combined Backup
-        </div>
-        <div class="panel-body">
-          <p style="color: var(--text-2); margin-bottom: 12px; font-size: 0.85rem;">
-            Restore all data from a complete backup file.
-          </p>
-          <input type="file" id="jsonImportInput" accept=".json" style="display: none;">
-          <button onclick="document.getElementById('jsonImportInput').click()" class="btn-primary" style="width: 100%;">
-            <i class="fas fa-file-upload"></i> Choose Backup File
-          </button>
-          <p style="color: var(--text-3); font-size: 0.75rem; margin-top: 10px; text-align: center;">
-            Select a complete JSON backup to import
-          </p>
-        </div>
-      </div>
 
       <!-- Data Info -->
       <div class="panel" style="margin-top: 24px;">
@@ -337,49 +323,58 @@ async function handleIndividualUpload(event, type, userId) {
       const data = JSON.parse(ev.target.result);
       let imported = 0;
 
-      // Import fuel records
-      if (type === 'fuel' && data.fuel && Array.isArray(data.fuel)) {
-        for (const rec of data.fuel) {
-          try {
-            if (window.createFuelRecord) {
-              await window.createFuelRecord(rec);
-              imported++;
+      // Import fuel records - handle both wrapped and bare array formats
+      if (type === 'fuel') {
+        let records = data.fuel || (Array.isArray(data) && data[0]?.date ? data : null);
+        if (records && Array.isArray(records)) {
+          for (const rec of records) {
+            try {
+              if (window.createFuelRecord) {
+                await window.createFuelRecord(rec);
+                imported++;
+              }
+            } catch (err) {
+              console.error('Error saving fuel record:', err);
             }
-          } catch (err) {
-            console.error('Error saving fuel record:', err);
           }
         }
       }
 
-      // Import mileage records
-      if (type === 'mileage' && (data.mileage && Array.isArray(data.mileage) || Array.isArray(data))) {
-        const records = data.mileage || data;
-        const mileRecords = records.map(r => ({
-          dateTime: r.dateTime,
-          currentMileage: r.currentMileage,
-        }));
-        for (const rec of mileRecords) {
-          try {
-            if (window.createMileageRecord) {
-              await window.createMileageRecord(rec);
-              imported++;
+      // Import mileage records - handle both wrapped and bare array formats
+      if (type === 'mileage') {
+        let records = data.mileage || (Array.isArray(data) && data[0]?.dateTime ? data : null);
+        if (records && Array.isArray(records)) {
+          for (const rec of records) {
+            try {
+              // Extract only required fields for storage
+              const mileRecord = {
+                dateTime: rec.dateTime,
+                currentMileage: rec.currentMileage,
+              };
+              if (window.createMileageRecord) {
+                await window.createMileageRecord(mileRecord);
+                imported++;
+              }
+            } catch (err) {
+              console.error('Error saving mileage record:', err);
             }
-          } catch (err) {
-            console.error('Error saving mileage record:', err);
           }
         }
       }
 
-      // Import maintenance records
-      if (type === 'maintenance' && data.maintenance && Array.isArray(data.maintenance)) {
-        for (const rec of data.maintenance) {
-          try {
-            if (window.createMaintRecord) {
-              await window.createMaintRecord(rec);
-              imported++;
+      // Import maintenance records - handle both wrapped and bare array formats
+      if (type === 'maintenance') {
+        let records = data.maintenance || (Array.isArray(data) && data[0]?.type ? data : null);
+        if (records && Array.isArray(records)) {
+          for (const rec of records) {
+            try {
+              if (window.createMaintRecord) {
+                await window.createMaintRecord(rec);
+                imported++;
+              }
+            } catch (err) {
+              console.error('Error saving maintenance record:', err);
             }
-          } catch (err) {
-            console.error('Error saving maintenance record:', err);
           }
         }
       }
@@ -387,7 +382,7 @@ async function handleIndividualUpload(event, type, userId) {
       if (imported === 0) {
         showToast(`No ${type} records found in file`, 'warn');
       } else {
-        showToast(`Successfully imported ${imported} ${type} records`, 'info');
+        showToast(`Successfully imported ${imported} ${type} records`, 'success');
       }
 
       // Reload the data view to show updated counts after a delay

@@ -636,116 +636,141 @@ function updateVaultCounts() {
     document.getElementById('vaultMileCount').textContent = mileageData.length;
 }
 
-// Individual Fuel Upload
-document.getElementById('fuelUploadInput')?.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async function(ev) {
-        try {
-            const data = JSON.parse(ev.target.result);
-            let fuelImported = 0;
+// Setup upload handlers with DOM ready check
+function setupUploadHandlers() {
+    // Individual Fuel Upload
+    const fuelUploadInput = document.getElementById('fuelUploadInput');
+    if (fuelUploadInput) {
+        fuelUploadInput.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(ev) {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    let fuelImported = 0;
 
-            // Handle both wrapped {fuel: [...]} and bare array formats
-            let records = data.fuel || (Array.isArray(data) && data[0]?.date ? data : null);
-            if (records && Array.isArray(records)) {
-                for (const rec of records) {
-                    try {
-                        await window.createFuelRecord(rec);
-                        fuelImported++;
-                    } catch (err) {
-                        console.error("Error saving fuel record:", err);
+                    // Handle both wrapped {fuel: [...]} and bare array formats
+                    let records = data.fuel || (Array.isArray(data) && data[0]?.date ? data : null);
+                    if (records && Array.isArray(records)) {
+                        for (const rec of records) {
+                            try {
+                                await window.createFuelRecord(rec);
+                                fuelImported++;
+                            } catch (err) {
+                                console.error("Error saving fuel record:", err);
+                            }
+                        }
+                        await loadFuel();
+                        renderFuelTable();
+                        toast(`✓ Imported ${fuelImported} fuel records`);
+                        updateVaultCounts();
+                        refreshOverview();
+                    } else {
+                        toast('No fuel data found in file', 'warn');
                     }
+                } catch(err) {
+                    console.error('Error importing fuel:', err);
+                    toast('Error: ' + err.message, 'error');
                 }
-                await loadFuel();
-                renderFuelTable();
-                toast(`✓ Imported ${fuelImported} fuel records`);
-                updateVaultCounts();
-            } else {
-                toast('No fuel data found in file', 'warn');
-            }
-        } catch(err) {
-            toast('Error: ' + err.message, 'error');
-        }
-        e.target.value = null;
-    };
-    reader.readAsText(file);
-});
+                e.target.value = null;
+            };
+            reader.readAsText(file);
+        });
+    }
 
-// Individual Mileage Upload
-document.getElementById('mileageUploadInput')?.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async function(ev) {
-        try {
-            const data = JSON.parse(ev.target.result);
-            let mileImported = 0;
+    // Individual Mileage Upload
+    const mileageUploadInput = document.getElementById('mileageUploadInput');
+    if (mileageUploadInput) {
+        mileageUploadInput.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(ev) {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    let mileImported = 0;
 
-            // Handle both wrapped {mileage: [...]} and bare array formats
-            let records = data.mileage || (Array.isArray(data) && data[0]?.dateTime ? data : null);
-            if (records && Array.isArray(records)) {
-                const mileRecords = records.map(r => ({
-                    dateTime: r.dateTime,
-                    currentMileage: r.currentMileage
-                }));
-                for (const rec of mileRecords) {
-                    try {
-                        await window.createMileageRecord(rec);
-                        mileImported++;
-                    } catch (err) {
-                        console.error("Error saving mileage record:", err);
+                    // Handle both wrapped {mileage: [...]} and bare array formats
+                    let records = data.mileage || (Array.isArray(data) && data[0]?.dateTime ? data : null);
+                    if (records && Array.isArray(records)) {
+                        const mileRecords = records.map(r => ({
+                            dateTime: r.dateTime,
+                            currentMileage: r.currentMileage
+                        }));
+                        for (const rec of mileRecords) {
+                            try {
+                                await window.createMileageRecord(rec);
+                                mileImported++;
+                            } catch (err) {
+                                console.error("Error saving mileage record:", err);
+                            }
+                        }
+                        await loadMileage();
+                        resetMileageFilter();
+                        toast(`✓ Imported ${mileImported} mileage records`);
+                        updateVaultCounts();
+                        refreshOverview();
+                    } else {
+                        toast('No mileage data found in file', 'warn');
                     }
+                } catch(err) {
+                    console.error('Error importing mileage:', err);
+                    toast('Error: ' + err.message, 'error');
                 }
-                await loadMileage();
-                resetMileageFilter();
-                toast(`✓ Imported ${mileImported} mileage records`);
-                updateVaultCounts();
-            } else {
-                toast('No mileage data found in file', 'warn');
-            }
-        } catch(err) {
-            toast('Error: ' + err.message, 'error');
-        }
-        e.target.value = null;
-    };
-    reader.readAsText(file);
-});
+                e.target.value = null;
+            };
+            reader.readAsText(file);
+        });
+    }
 
-// Individual Maintenance Upload
-document.getElementById('maintUploadInput')?.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async function(ev) {
-        try {
-            const data = JSON.parse(ev.target.result);
-            let maintImported = 0;
+    // Individual Maintenance Upload
+    const maintUploadInput = document.getElementById('maintUploadInput');
+    if (maintUploadInput) {
+        maintUploadInput.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(ev) {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    let maintImported = 0;
 
-            // Handle both wrapped {maintenance: [...]} and bare array formats
-            let records = data.maintenance || (Array.isArray(data) && data[0]?.type ? data : null);
-            if (records && Array.isArray(records)) {
-                for (const rec of records) {
-                    try {
-                        await window.createMaintRecord(rec);
-                        maintImported++;
-                    } catch (err) {
-                        console.error("Error saving maintenance record:", err);
+                    // Handle both wrapped {maintenance: [...]} and bare array formats
+                    let records = data.maintenance || (Array.isArray(data) && data[0]?.type ? data : null);
+                    if (records && Array.isArray(records)) {
+                        for (const rec of records) {
+                            try {
+                                await window.createMaintRecord(rec);
+                                maintImported++;
+                            } catch (err) {
+                                console.error("Error saving maintenance record:", err);
+                            }
+                        }
+                        await loadMaint();
+                        toast(`✓ Imported ${maintImported} maintenance records`);
+                        updateVaultCounts();
+                        refreshOverview();
+                    } else {
+                        toast('No maintenance data found in file', 'warn');
                     }
+                } catch(err) {
+                    console.error('Error importing maintenance:', err);
+                    toast('Error: ' + err.message, 'error');
                 }
-                await loadMaint();
-                toast(`✓ Imported ${maintImported} maintenance records`);
-                updateVaultCounts();
-            } else {
-                toast('No maintenance data found in file', 'warn');
-            }
-        } catch(err) {
-            toast('Error: ' + err.message, 'error');
-        }
-        e.target.value = null;
-    };
-    reader.readAsText(file);
-});
+                e.target.value = null;
+            };
+            reader.readAsText(file);
+        });
+    }
+}
+
+// Initialize upload handlers when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupUploadHandlers);
+} else {
+    setupUploadHandlers();
+}
 
 // ══════════════════════════════════════════════════
 // MAINTENANCE

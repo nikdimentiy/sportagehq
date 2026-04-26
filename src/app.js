@@ -197,6 +197,76 @@ document.getElementById('fuelCsvInput').addEventListener('change', function(e) {
     reader.readAsText(file);
 });
 
+// Mileage CSV Import
+document.getElementById('mileCsvInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const info = document.getElementById('mileFileInfo');
+    if (!file) return;
+    info.textContent = `Analyzing: ${file.name}...`;
+    info.style.color = 'var(--cyan)';
+    const reader = new FileReader();
+    reader.onload = async function(ev) {
+        try {
+            const rows = ev.target.result.split(/\r\n|\n/);
+            if (rows.length < 2) throw new Error('Empty file');
+            const rawH = rows[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+            const hmap = {
+                'datetime': 'dateTime', 'date_time': 'dateTime', 'timestamp': 'dateTime',
+                'date': 'dateTime', 'time': 'dateTime',
+                'mileage': 'currentMileage', 'odometer': 'currentMileage', 'odo': 'currentMileage',
+                'current mileage': 'currentMileage', 'current_mileage': 'currentMileage',
+                'currentmileage': 'currentMileage'
+            };
+            const headers = rawH.map(h => hmap[h] || h);
+            const imported = [];
+            for (let i = 1; i < rows.length; i++) {
+                if (!rows[i].trim()) continue;
+                const vals = rows[i].split(',').map(v => v.trim().replace(/"/g, ''));
+                const rec = {};
+                headers.forEach((h, idx) => { if (vals[idx] !== undefined) rec[h] = vals[idx]; });
+
+                let dt = rec.dateTime || '';
+                if (dt) {
+                    if (dt.includes('/')) {
+                        const parts = dt.split(' ');
+                        const dp = parts[0].split('/');
+                        if (dp.length === 3) {
+                            let y = dp[2]; if (y.length === 2) y = '20' + y;
+                            dt = `${y}-${dp[0].padStart(2, '0')}-${dp[1].padStart(2, '0')}`;
+                        }
+                        if (parts[1]) dt += ' ' + parts[1].substring(0, 5);
+                    } else if (dt.includes('T')) {
+                        dt = dt.replace('T', ' ').substring(0, 16);
+                    }
+                    if (dt.length === 10) dt += ' 00:00';
+                } else {
+                    dt = nowPacific();
+                }
+
+                const odo = parseInt(rec.currentMileage);
+                if (!isNaN(odo) && odo > 0) imported.push({ dateTime: dt, currentMileage: odo });
+            }
+
+            let savedCount = 0;
+            for (const rec of imported) {
+                try {
+                    await window.createMileageRecord(rec);
+                    savedCount++;
+                } catch (err) {
+                    console.error('Error saving mileage record:', err);
+                }
+            }
+
+            await loadMileage();
+            resetMileageFilter();
+            info.textContent = `Synced: ${savedCount} records`;
+            toast(`${savedCount} mileage records imported`);
+        } catch (err) { info.textContent = `Error: ${err.message}`; info.style.color = 'var(--rose)'; }
+        e.target.value = null;
+    };
+    reader.readAsText(file);
+});
+
 function renderFuelTable() {
     const tb = document.getElementById('fuelTableBody');
     tb.innerHTML = '';

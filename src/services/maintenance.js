@@ -10,15 +10,27 @@ export async function loadMaintenance(userId) {
   const cacheKey = `${CACHE_KEY}_${userId}`;
 
   try {
-    const result = await databases.listDocuments(DB_ID, MAINT_COL, [
-      Query.equal('userId', userId),
-      Query.orderDesc('date'),
-      Query.limit(100),
-    ]);
+    let allData = [];
+    let offset = 0;
+    const limit = 100;
 
-    const data = result.documents || [];
-    setCache(cacheKey, data);
-    return data;
+    while (true) {
+      const result = await databases.listDocuments(DB_ID, MAINT_COL, [
+        Query.equal('userId', userId),
+        Query.orderDesc('date'),
+        Query.limit(limit),
+        Query.offset(offset),
+      ]);
+
+      if (!result.documents || result.documents.length === 0) break;
+      allData = allData.concat(result.documents);
+
+      if (result.documents.length < limit) break;
+      offset += limit;
+    }
+
+    setCache(cacheKey, allData);
+    return allData;
   } catch (error) {
     console.error('Error loading maintenance records:', error);
     // Return stale cache data as fallback

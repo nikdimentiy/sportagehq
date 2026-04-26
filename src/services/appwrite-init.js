@@ -174,11 +174,26 @@ window.createFuelRecord = async (data) => {
 window.loadFuelFromAppwrite = async () => {
     if (!window.currentUser) return;
     try {
-        const res = await databases.listDocuments(DB_ID, FUEL_COL, [
-            Query.equal("userId", window.currentUser.$id),
-            Query.orderDesc("date")
-        ]);
-        return res.documents || [];
+        let allDocs = [];
+        let offset = 0;
+        const limit = 100;
+
+        while (true) {
+            const res = await databases.listDocuments(DB_ID, FUEL_COL, [
+                Query.equal("userId", window.currentUser.$id),
+                Query.orderDesc("date"),
+                Query.limit(limit),
+                Query.offset(offset)
+            ]);
+
+            if (!res.documents || res.documents.length === 0) break;
+            allDocs = allDocs.concat(res.documents);
+
+            if (res.documents.length < limit) break;
+            offset += limit;
+        }
+
+        return allDocs;
     } catch (err) {
         console.error("Error loading fuel records:", err);
         return [];
@@ -206,11 +221,26 @@ window.createMileageRecord = async (data) => {
 window.loadMileageFromAppwrite = async () => {
     if (!window.currentUser) return;
     try {
-        const res = await databases.listDocuments(DB_ID, MILE_COL, [
-            Query.equal("userId", window.currentUser.$id),
-            Query.orderDesc("dateTime")
-        ]);
-        return res.documents || [];
+        let allDocs = [];
+        let offset = 0;
+        const limit = 100;
+
+        while (true) {
+            const res = await databases.listDocuments(DB_ID, MILE_COL, [
+                Query.equal("userId", window.currentUser.$id),
+                Query.orderDesc("dateTime"),
+                Query.limit(limit),
+                Query.offset(offset)
+            ]);
+
+            if (!res.documents || res.documents.length === 0) break;
+            allDocs = allDocs.concat(res.documents);
+
+            if (res.documents.length < limit) break;
+            offset += limit;
+        }
+
+        return allDocs;
     } catch (err) {
         console.error("Error loading mileage records:", err);
         return [];
@@ -220,11 +250,24 @@ window.loadMileageFromAppwrite = async () => {
 window.deleteMileageRecordsForUser = async () => {
     if (!window.currentUser) throw new Error("Not authenticated");
     try {
-        const res = await databases.listDocuments(DB_ID, MILE_COL, [
-            Query.equal("userId", window.currentUser.$id)
-        ]);
-        for (const doc of res.documents) {
-            await databases.deleteDocument(DB_ID, MILE_COL, doc.$id);
+        let offset = 0;
+        const limit = 100;
+
+        while (true) {
+            const res = await databases.listDocuments(DB_ID, MILE_COL, [
+                Query.equal("userId", window.currentUser.$id),
+                Query.limit(limit),
+                Query.offset(offset)
+            ]);
+
+            if (!res.documents || res.documents.length === 0) break;
+
+            for (const doc of res.documents) {
+                await databases.deleteDocument(DB_ID, MILE_COL, doc.$id);
+            }
+
+            if (res.documents.length < limit) break;
+            offset += limit;
         }
     } catch (err) {
         console.error("Error deleting mileage records:", err);
@@ -253,11 +296,26 @@ window.createMaintRecord = async (data) => {
 window.loadMaintFromAppwrite = async () => {
     if (!window.currentUser) return;
     try {
-        const res = await databases.listDocuments(DB_ID, MAINT_COL, [
-            Query.equal("userId", window.currentUser.$id),
-            Query.orderDesc("date")
-        ]);
-        return res.documents || [];
+        let allDocs = [];
+        let offset = 0;
+        const limit = 100;
+
+        while (true) {
+            const res = await databases.listDocuments(DB_ID, MAINT_COL, [
+                Query.equal("userId", window.currentUser.$id),
+                Query.orderDesc("date"),
+                Query.limit(limit),
+                Query.offset(offset)
+            ]);
+
+            if (!res.documents || res.documents.length === 0) break;
+            allDocs = allDocs.concat(res.documents);
+
+            if (res.documents.length < limit) break;
+            offset += limit;
+        }
+
+        return allDocs;
     } catch (err) {
         console.error("Error loading maintenance records:", err);
         return [];
@@ -277,11 +335,24 @@ window.deleteMaintRecordFromAppwrite = async (docId) => {
 window.deleteMaintRecordsForUser = async () => {
     if (!window.currentUser) throw new Error("Not authenticated");
     try {
-        const res = await databases.listDocuments(DB_ID, MAINT_COL, [
-            Query.equal("userId", window.currentUser.$id)
-        ]);
-        for (const doc of res.documents) {
-            await databases.deleteDocument(DB_ID, MAINT_COL, doc.$id);
+        let offset = 0;
+        const limit = 100;
+
+        while (true) {
+            const res = await databases.listDocuments(DB_ID, MAINT_COL, [
+                Query.equal("userId", window.currentUser.$id),
+                Query.limit(limit),
+                Query.offset(offset)
+            ]);
+
+            if (!res.documents || res.documents.length === 0) break;
+
+            for (const doc of res.documents) {
+                await databases.deleteDocument(DB_ID, MAINT_COL, doc.$id);
+            }
+
+            if (res.documents.length < limit) break;
+            offset += limit;
         }
     } catch (err) {
         console.error("Error deleting maintenance records:", err);

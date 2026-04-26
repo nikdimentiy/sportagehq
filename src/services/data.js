@@ -7,14 +7,36 @@ export async function wipeAllData(userId) {
   if (!userId) throw new Error('userId is required');
 
   try {
-    // Delete from all collections in parallel
-    const results = await Promise.all([
-      deleteAllFuel(userId),
-      deleteAllMileage(userId),
-      deleteAllMaintenance(userId),
-    ]);
+    // Delete from all collections sequentially with error logging
+    let fuelCount = 0;
+    let mileageCount = 0;
+    let maintenanceCount = 0;
 
-    const totalDeleted = results.reduce((sum, count) => sum + count, 0);
+    try {
+      fuelCount = await deleteAllFuel(userId);
+      console.log('Deleted fuel records:', fuelCount);
+    } catch (error) {
+      console.error('Error deleting fuel records:', error);
+      showToast(`Failed to delete fuel records: ${error.message}`, 'error');
+    }
+
+    try {
+      mileageCount = await deleteAllMileage(userId);
+      console.log('Deleted mileage records:', mileageCount);
+    } catch (error) {
+      console.error('Error deleting mileage records:', error);
+      showToast(`Failed to delete mileage records: ${error.message}`, 'error');
+    }
+
+    try {
+      maintenanceCount = await deleteAllMaintenance(userId);
+      console.log('Deleted maintenance records:', maintenanceCount);
+    } catch (error) {
+      console.error('Error deleting maintenance records:', error);
+      showToast(`Failed to delete maintenance records: ${error.message}`, 'error');
+    }
+
+    const totalDeleted = fuelCount + mileageCount + maintenanceCount;
 
     // Clear all related cache entries
     const cacheKeys = [

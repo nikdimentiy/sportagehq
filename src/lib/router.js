@@ -6,7 +6,6 @@ const routes = {
   '/fuel': () => import('../views/fuel.js').then(m => m.renderFuelView()),
   '/mileage': () => import('../views/mileage.js').then(m => m.renderMileageView()),
   '/maintenance': () => import('../views/maintenance.js').then(m => m.renderMaintenanceView()),
-  '/data': () => import('../views/data.js').then(m => m.renderDataView()),
 };
 
 export function navigate(path) {

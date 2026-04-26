@@ -75,6 +75,13 @@ function buildMileageHTML(mileage) {
         </div>
       </div>
 
+      <!-- Export -->
+      <div style="margin-bottom: 24px;">
+        <button onclick="window.exportMileageJSON && window.exportMileageJSON()" style="padding: 10px 16px; background: rgba(0,224,150,0.15); border: 1px solid rgba(0,224,150,0.3); border-radius: 4px; color: var(--emerald); cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.2s;">
+          <i class="fas fa-download"></i> Export as JSON
+        </button>
+      </div>
+
       <!-- Records Table -->
       <div class="panel">
         <div class="panel-header">

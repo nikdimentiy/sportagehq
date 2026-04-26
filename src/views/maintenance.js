@@ -69,6 +69,13 @@ function buildMaintenanceHTML(maintenance) {
         </div>
       </div>
 
+      <!-- Export -->
+      <div style="margin-bottom: 24px;">
+        <button onclick="window.exportMaintJSON && window.exportMaintJSON()" style="padding: 10px 16px; background: rgba(255,61,113,0.15); border: 1px solid rgba(255,61,113,0.3); border-radius: 4px; color: var(--rose); cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.2s;">
+          <i class="fas fa-download"></i> Export as JSON
+        </button>
+      </div>
+
       <!-- Records Table -->
       <div class="panel">
         <div class="panel-header">

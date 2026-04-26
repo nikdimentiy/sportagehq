@@ -13,7 +13,6 @@ export function renderNavbar() {
     { path: '/fuel', label: 'Fuel', icon: 'fa-gas-pump' },
     { path: '/mileage', label: 'Mileage', icon: 'fa-road' },
     { path: '/maintenance', label: 'Maintenance', icon: 'fa-wrench' },
-    { path: '/data', label: 'DataVault', icon: 'fa-database' },
   ];
 
   const navLinks = navItems.map(item => {

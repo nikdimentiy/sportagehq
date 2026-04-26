@@ -1,10 +1,12 @@
-import { renderHome } from '../views/home.js';
-import { renderDashboard } from '../views/dashboard.js';
 import { renderNavbar } from '../components/navbar.js';
 
 const routes = {
-  '/': renderHome,
-  '/dashboard': renderDashboard,
+  '/': () => import('../views/home.js').then(m => m.renderHome()),
+  '/dashboard': () => import('../views/dashboard.js').then(m => m.renderDashboard()),
+  '/fuel': () => import('../views/fuel.js').then(m => m.renderFuelView()),
+  '/mileage': () => import('../views/mileage.js').then(m => m.renderMileageView()),
+  '/maintenance': () => import('../views/maintenance.js').then(m => m.renderMaintenanceView()),
+  '/data': () => import('../views/data.js').then(m => m.renderDataView()),
 };
 
 export function navigate(path) {

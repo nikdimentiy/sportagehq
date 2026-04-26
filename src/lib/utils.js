@@ -1,3 +1,5 @@
+import { showToast } from '../components/toast.js';
+
 export function formatDate(date) {
   return new Date(date).toLocaleDateString();
 }
@@ -12,5 +14,5 @@ export function debounce(fn, delay) {
 
 export function handleError(error) {
   console.error('Error:', error);
-  alert('An error occurred. Check the console.');
+  showToast(error.message || 'An error occurred. Check the console.', 'error');
 }

@@ -1,0 +1,17 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "description": "A simple single-page app with AppWrite",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "appwrite": "^14.0.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

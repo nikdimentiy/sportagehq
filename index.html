@@ -1,0 +1,2511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sportage HQ | Command Center</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-void:       #07080c;
+            --bg-base:       #0c0e14;
+            --bg-surface:    #12151e;
+            --bg-card:       #181c28;
+            --bg-input:      #0e1018;
+            --bg-elevated:   #1e2233;
+
+            --cyan:          #00e5ff;
+            --cyan-dim:      rgba(0,229,255,0.15);
+            --cyan-glow:     rgba(0,229,255,0.4);
+
+            --amber:         #ffab00;
+            --amber-dim:     rgba(255,171,0,0.12);
+
+            --rose:          #ff3d71;
+            --rose-dim:      rgba(255,61,113,0.12);
+            --rose-glow:     rgba(255,61,113,0.35);
+
+            --emerald:       #00e096;
+            --emerald-dim:   rgba(0,224,150,0.1);
+
+            --violet:        #7b61ff;
+            --violet-dim:    rgba(123,97,255,0.12);
+
+            --border:        rgba(255,255,255,0.06);
+            --border-active: rgba(0,229,255,0.3);
+
+            --text-1:        #eef0f6;
+            --text-2:        #6b7394;
+            --text-3:        #3a3f54;
+
+            --font-display:  'Exo 2', sans-serif;
+            --font-body:     'Rajdhani', sans-serif;
+            --font-mono:     'Share Tech Mono', monospace;
+
+            --radius:        10px;
+            --transition:    0.2s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-void);
+            color: var(--text-1);
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-weight: 500;
+        }
+
+        /* ── GRID SCANLINES ── */
+        body::before {
+            content:'';
+            position:fixed; inset:0;
+            background:
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.008) 2px, rgba(0,229,255,0.008) 3px),
+                radial-gradient(ellipse at 20% 20%, rgba(0,229,255,0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(123,97,255,0.03) 0%, transparent 50%);
+            pointer-events:none; z-index:0;
+        }
+
+        /* ── TOP NAV ── */
+        .nav {
+            position:fixed; top:0; width:100%; height:54px;
+            background:rgba(7,8,12,0.92);
+            backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+            border-bottom:1px solid var(--border);
+            display:none; justify-content:space-between; align-items:center;
+            padding:0 2rem; z-index:1000;
+        }
+        .nav.authenticated { display: flex; }
+
+        .nav-brand {
+            font-family:var(--font-display);
+            font-size:1.1rem; font-weight:800;
+            letter-spacing:1.5px; text-transform:uppercase;
+            display:flex; align-items:center; gap:10px;
+        }
+
+        .nav-brand .mark {
+            width:30px; height:30px; border-radius:7px;
+            background:linear-gradient(135deg, var(--cyan), var(--violet));
+            display:grid; place-items:center;
+            font-size:0.7rem; color:#fff;
+        }
+
+        .nav-brand span { color:var(--cyan); }
+
+        .nav-tabs {
+            display:flex; gap:0; list-style:none;
+        }
+
+        .nav-tabs button {
+            background:none; border:none; color:var(--text-2);
+            font-family:var(--font-body); font-size:0.85rem; font-weight:600;
+            padding:16px 20px; cursor:pointer; letter-spacing:0.5px;
+            border-bottom:2px solid transparent;
+            transition: color var(--transition), border-color var(--transition);
+        }
+
+        .nav-tabs button:hover { color:var(--text-1); }
+        .nav-tabs button.active { color:var(--cyan); border-bottom-color:var(--cyan); }
+
+        .nav-status {
+            display:flex; align-items:center; gap:7px;
+            font-family:var(--font-mono); font-size:0.68rem;
+            color:var(--text-2);
+            background:rgba(0,224,150,0.06);
+            border:1px solid rgba(0,224,150,0.15);
+            padding:5px 14px; border-radius:20px;
+        }
+
+        .status-dot {
+            width:6px; height:6px; border-radius:50%;
+            background:var(--emerald); box-shadow:0 0 8px var(--emerald);
+            animation:pulse 2.4s ease infinite;
+        }
+
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+
+        /* ── MAIN LAYOUT ── */
+        .main { position:relative; z-index:1; max-width:1520px; margin:68px auto 40px; padding:20px; display: none; }
+        .main.authenticated { display: block; }
+
+        /* ── TAB PAGES ── */
+        .tab-page { display:none; animation: fadeUp 0.3s ease; }
+        .tab-page.active { display:block; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ── PANELS ── */
+        .panel {
+            background:var(--bg-surface);
+            border:1px solid var(--border);
+            border-radius:var(--radius);
+            position:relative; overflow:hidden;
+        }
+
+        .panel::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background:linear-gradient(90deg, transparent, var(--cyan), transparent);
+            opacity:0.3;
+        }
+
+        .panel-header {
+            padding:18px 22px 14px;
+            font-family:var(--font-display); font-size:0.72rem; font-weight:700;
+            color:var(--text-2); letter-spacing:2px; text-transform:uppercase;
+            display:flex; align-items:center; gap:10px;
+            border-bottom:1px solid var(--border);
+        }
+
+        .panel-header i { color:var(--cyan); font-size:0.8rem; }
+        .panel-body { padding:20px 22px; }
+
+        /* ── COCKPIT GRID ── */
+        .cockpit-grid {
+            display:grid; grid-template-columns:320px 1fr; gap:18px;
+            align-items:start;
+        }
+
+        /* ── FORM FIELDS ── */
+        .field { margin-bottom:14px; }
+
+        .field-label {
+            font-family:var(--font-mono); font-size:0.6rem; font-weight:500;
+            color:var(--text-3); letter-spacing:2px; text-transform:uppercase;
+            margin-bottom:5px;
+        }
+
+        .field input, .field select {
+            width:100%; background:var(--bg-input);
+            border:1px solid var(--border); color:var(--text-1);
+            padding:10px 14px; border-radius:6px;
+            font-family:var(--font-mono); font-size:0.85rem;
+            outline:none; transition:border-color var(--transition), box-shadow var(--transition);
+        }
+
+        .field input:focus, .field select:focus {
+            border-color:rgba(0,229,255,0.5);
+            box-shadow:0 0 0 3px rgba(0,229,255,0.08);
+        }
+
+        .field input::placeholder { color:var(--text-3); font-family:var(--font-body); }
+        .field select option { background:var(--bg-card); color:var(--text-1); }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; }
+        input[type="number"] { -moz-appearance:textfield; }
+
+        /* ── BUTTONS ── */
+        .btn-primary {
+            width:100%; padding:12px;
+            background:linear-gradient(135deg, var(--cyan), #0091ea);
+            border:none; border-radius:6px;
+            color:#000; font-family:var(--font-display); font-size:0.85rem;
+            font-weight:700; letter-spacing:1px; text-transform:uppercase;
+            cursor:pointer;
+            box-shadow:0 4px 18px rgba(0,229,255,0.2);
+            transition:transform var(--transition), box-shadow var(--transition);
+        }
+
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 8px 28px rgba(0,229,255,0.35); }
+
+        .btn-sm {
+            background:var(--bg-card); border:1px solid var(--border);
+            color:var(--text-2); padding:8px 12px; border-radius:6px;
+            cursor:pointer; font-size:0.72rem; font-family:var(--font-body);
+            font-weight:600; transition:all var(--transition);
+            display:inline-flex; align-items:center; gap:5px;
+        }
+
+        .btn-sm:hover { border-color:var(--border-active); color:var(--text-1); background:rgba(255,255,255,0.04); }
+
+        .btn-sm.danger { color:rgba(255,61,113,0.6); border-color:rgba(255,61,113,0.15); }
+        .btn-sm.danger:hover { color:var(--rose); border-color:rgba(255,61,113,0.4); background:var(--rose-dim); }
+
+        .btn-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+
+        /* ── GAUGE CARDS ── */
+        .gauge-grid { display:grid; gap:12px; margin-bottom:18px; }
+        .gauge-grid.g4 { grid-template-columns:repeat(4,1fr); }
+        .gauge-grid.g5 { grid-template-columns:repeat(5,1fr); }
+        .gauge-grid.g6 { grid-template-columns:repeat(6,1fr); }
+
+        .gauge {
+            background:var(--bg-card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:16px 14px;
+            position:relative; overflow:hidden;
+            transition:border-color var(--transition), transform var(--transition);
+        }
+
+        .gauge:hover { border-color:var(--border-active); transform:translateY(-2px); }
+
+        .gauge .glow {
+            position:absolute; top:-25px; right:-25px;
+            width:70px; height:70px; border-radius:50%;
+            filter:blur(28px); opacity:0.3; pointer-events:none;
+        }
+
+        .gauge.cyan   { border-top:2px solid var(--cyan); }
+        .gauge.amber  { border-top:2px solid var(--amber); }
+        .gauge.rose   { border-top:2px solid var(--rose); }
+        .gauge.emerald{ border-top:2px solid var(--emerald); }
+        .gauge.violet { border-top:2px solid var(--violet); }
+
+        .gauge.cyan .glow    { background:var(--cyan); }
+        .gauge.amber .glow   { background:var(--amber); }
+        .gauge.rose .glow    { background:var(--rose); }
+        .gauge.emerald .glow { background:var(--emerald); }
+        .gauge.violet .glow  { background:var(--violet); }
+
+        .gauge-label {
+            font-family:var(--font-mono); font-size:0.55rem;
+            color:var(--text-2); letter-spacing:1.5px; text-transform:uppercase;
+            margin-bottom:10px; display:flex; align-items:center; gap:5px;
+        }
+
+        .gauge-label i { font-size:0.6rem; }
+
+        .gauge-val {
+            font-family:var(--font-display); font-size:1.65rem;
+            font-weight:800; line-height:1; color:var(--text-1);
+        }
+
+        .gauge-val.cyan    { color:var(--cyan); }
+        .gauge-val.amber   { color:var(--amber); }
+        .gauge-val.rose    { color:var(--rose); }
+        .gauge-val.emerald { color:var(--emerald); }
+        .gauge-val.violet  { color:var(--violet); }
+
+        .gauge-unit { font-size:0.7rem; color:var(--text-3); margin-left:3px; font-family:var(--font-body); }
+
+        /* ── METRIC CHIPS ── */
+        .chip-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:18px; }
+
+        .chip {
+            background:var(--bg-card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:12px 10px; text-align:center;
+            transition:border-color var(--transition);
+        }
+
+        .chip:hover { border-color:var(--border-active); }
+
+        .chip-label {
+            font-family:var(--font-mono); font-size:0.5rem;
+            color:var(--text-3); letter-spacing:1.5px; text-transform:uppercase;
+            margin-bottom:6px;
+        }
+
+        .chip-val {
+            font-family:var(--font-display); font-size:0.88rem;
+            font-weight:700; color:var(--text-1);
+        }
+
+        /* ── DATA TABLE ── */
+        .table-wrap {
+            border:1px solid var(--border); border-radius:var(--radius);
+            overflow-x:auto; background:rgba(0,0,0,0.15);
+        }
+
+        table { width:100%; border-collapse:collapse; min-width:700px; }
+
+        thead tr { background:var(--bg-card); border-bottom:1px solid var(--border); }
+
+        th {
+            text-align:left; padding:12px 14px;
+            color:var(--cyan); font-family:var(--font-mono);
+            font-size:0.58rem; font-weight:500;
+            letter-spacing:2px; text-transform:uppercase; white-space:nowrap;
+        }
+
+        td {
+            padding:11px 14px; border-bottom:1px solid rgba(255,255,255,0.03);
+            color:var(--text-2); font-size:0.85rem;
+        }
+
+        tbody tr { transition:background var(--transition); }
+        tbody tr:last-child td { border-bottom:none; }
+        tbody tr:hover { background:rgba(0,229,255,0.03); }
+
+        th:nth-child(n+4), td:nth-child(n+4) { text-align:right; font-variant-numeric:tabular-nums; }
+
+        .td-highlight { color:var(--text-1)!important; font-weight:600; }
+        .td-mono { font-family:var(--font-mono)!important; }
+        .td-cyan { color:var(--cyan)!important; }
+        .td-rose { color:var(--rose)!important; }
+
+        /* ── CHARTS ── */
+        .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
+        .chart-box { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; position:relative; }
+        .chart-box canvas { max-height:260px; }
+        .chart-title { font-family:var(--font-mono); font-size:0.58rem; color:var(--text-3); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; }
+
+        /* ── IMPORT ZONE ── */
+        .import-zone {
+            border:1px dashed rgba(255,255,255,0.1);
+            border-radius:8px; padding:14px; text-align:center;
+            margin-bottom:14px; cursor:pointer;
+            transition:border-color var(--transition), background var(--transition);
+        }
+
+        .import-zone:hover { border-color:var(--cyan); background:rgba(0,229,255,0.03); }
+        .import-zone-label { color:var(--cyan); font-size:0.78rem; font-weight:600; }
+        .import-zone-sub { font-size:0.65rem; color:var(--text-3); margin-top:4px; }
+
+        /* ── SECTION LABEL ── */
+        .sec-label {
+            font-family:var(--font-mono); font-size:0.58rem;
+            color:var(--text-3); letter-spacing:3px; text-transform:uppercase;
+            margin-bottom:12px; display:flex; align-items:center; gap:12px;
+        }
+
+        .sec-label::after { content:''; flex:1; height:1px; background:linear-gradient(90deg, var(--border), transparent); }
+
+        /* ── NOTIFICATION ── */
+        .notif {
+            background:linear-gradient(90deg, rgba(0,229,255,0.08), transparent);
+            border-left:3px solid var(--cyan);
+            padding:16px; border-radius:4px; margin-bottom:14px;
+            display:none; animation:fadeUp 0.3s ease;
+            font-size:0.88rem;
+        }
+
+        /* ── DATE FILTER ROW ── */
+        .filter-row {
+            display:grid; grid-template-columns:1fr 1fr auto; gap:6px;
+            align-items:center; margin-bottom:10px;
+        }
+
+        .filter-row input {
+            background:var(--bg-input); border:1px solid var(--border);
+            color:var(--text-1); padding:9px 12px; border-radius:6px;
+            font-family:var(--font-mono); font-size:0.8rem; outline:none; width:100%;
+        }
+
+        .filter-row input:focus { border-color:rgba(0,229,255,0.5); }
+
+        .apply-btn {
+            background:var(--cyan); color:#000; border:none;
+            width:34px; height:34px; border-radius:6px;
+            cursor:pointer; display:grid; place-items:center;
+            font-size:0.7rem;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            position:relative; z-index:1; text-align:center; padding:30px 0;
+            font-family:var(--font-mono); font-size:0.58rem;
+            color:var(--text-3); letter-spacing:3px; text-transform:uppercase;
+        }
+
+        /* ── TOAST ── */
+        .toast {
+            position:fixed; bottom:24px; right:24px;
+            background:var(--bg-elevated); border:1px solid var(--border-active);
+            color:var(--text-1); padding:14px 22px; border-radius:var(--radius);
+            font-family:var(--font-body); font-size:0.85rem; font-weight:600;
+            z-index:2000; opacity:0; transform:translateY(10px);
+            transition:opacity 0.3s, transform 0.3s;
+            box-shadow:0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .toast.show { opacity:1; transform:translateY(0); }
+
+        /* ── OVERVIEW SUMMARY CARDS ── */
+        .summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:18px; }
+
+        .summary-card {
+            background:var(--bg-surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:22px;
+            position:relative; overflow:hidden;
+            text-align: center;
+        }
+
+        .summary-card::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background:linear-gradient(90deg, transparent, var(--cyan), transparent); opacity:0.3;
+        }
+
+        .summary-card h3 {
+            font-family:var(--font-mono); font-size:0.6rem;
+            color:var(--text-3); letter-spacing:2px; text-transform:uppercase;
+            margin-bottom:14px;
+        }
+
+        .summary-big {
+            font-family:var(--font-display); font-size:2.4rem;
+            font-weight:800; color:var(--cyan); line-height:1;
+        }
+
+        .summary-sub { font-size:0.78rem; color:var(--text-2); margin-top:6px; }
+
+        /* ── RESPONSIVE ── */
+        @media(max-width:1100px) {
+            .cockpit-grid { grid-template-columns:1fr; }
+            .gauge-grid.g4, .gauge-grid.g5 { grid-template-columns:repeat(2,1fr); }
+            .chip-grid, .gauge-grid.g6 { grid-template-columns:repeat(3,1fr); }
+            .chart-grid { grid-template-columns:1fr; }
+            .summary-grid { grid-template-columns:1fr; }
+        }
+
+        @media(max-width:600px) {
+            .nav { padding:0 1rem; }
+            .nav-status { display:none; }
+            .gauge-grid.g4, .gauge-grid.g5 { grid-template-columns:1fr 1fr; }
+            .chip-grid { grid-template-columns:1fr 1fr; }
+            .main { padding:14px; }
+        }
+
+        /* ── FLATPICKR OVERRIDES ── */
+        .flatpickr-calendar { background:var(--bg-surface)!important; border:1px solid var(--border)!important; border-radius:var(--radius)!important; box-shadow:0 20px 60px rgba(0,0,0,.5)!important; font-family:var(--font-body)!important; }
+        .flatpickr-day.selected, .flatpickr-day.selected:hover { background:var(--cyan)!important; border-color:var(--cyan)!important; color:#000!important; }
+        .flatpickr-day:hover { background:var(--cyan-dim)!important; }
+        .flatpickr-months .flatpickr-month, .flatpickr-weekdays, span.flatpickr-weekday { background:var(--bg-card)!important; color:var(--text-2)!important; fill:var(--text-2)!important; }
+        .flatpickr-day { color:var(--text-1)!important; }
+        .flatpickr-day.flatpickr-disabled { color:var(--text-3)!important; }
+        .flatpickr-current-month .cur-month, .flatpickr-current-month .numInput { color:var(--text-1)!important; }
+        .flatpickr-time input { color:var(--text-1)!important; background:transparent!important; }
+        .flatpickr-time .flatpickr-time-separator { color:var(--text-3)!important; }
+        .flatpickr-prev-month svg, .flatpickr-next-month svg { fill:var(--text-2)!important; }
+        .numInputWrapper:hover { background:transparent!important; }
+
+        /* Hidden utility */
+        .hidden { display:none!important; }
+
+        /* Monday/Friday row highlights */
+        .monday-row td { color:var(--amber)!important; }
+        .friday-row { background:rgba(0,229,255,0.02); }
+        .gas-icon { color:var(--rose); margin-left:6px; font-size:0.65rem; }
+
+        /* ── READABLE FONT OVERRIDES: FuelOS & MileageOS ── */
+        #page-fuel .field-label,
+        #page-mileage .field-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+            color: var(--text-2);
+            text-transform: none;
+            font-weight: 600;
+        }
+
+        #page-fuel .field input,
+        #page-fuel .field select,
+        #page-mileage .field input,
+        #page-mileage .field select,
+        #page-mileage .filter-row input {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.88rem;
+            letter-spacing: 0;
+        }
+
+        #page-fuel .panel-header,
+        #page-mileage .panel-header {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.78rem;
+            letter-spacing: 0.5px;
+            text-transform: none;
+            font-weight: 700;
+        }
+
+        #page-fuel .btn-primary,
+        #page-mileage .btn-primary {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.88rem;
+            letter-spacing: 0.3px;
+            text-transform: none;
+        }
+
+        #page-fuel .btn-sm,
+        #page-mileage .btn-sm {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.78rem;
+            letter-spacing: 0;
+        }
+
+        #page-fuel th,
+        #page-mileage th {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            letter-spacing: 0.8px;
+        }
+
+        #page-fuel td,
+        #page-mileage td {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+        }
+
+        #page-fuel .gauge-label,
+        #page-mileage .gauge-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.6rem;
+            letter-spacing: 0.5px;
+            text-transform: none;
+        }
+
+        #page-fuel .gauge-val,
+        #page-mileage .gauge-val {
+            font-family: 'Inter', sans-serif;
+        }
+
+        #page-fuel .chip-label,
+        #page-mileage .chip-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.58rem;
+            letter-spacing: 0.5px;
+            text-transform: none;
+        }
+
+        #page-fuel .chip-val,
+        #page-mileage .chip-val {
+            font-family: 'Inter', sans-serif;
+        }
+
+        #page-fuel .sec-label,
+        #page-mileage .sec-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+        }
+
+        #page-fuel .notif,
+        #page-mileage .notif {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.88rem;
+        }
+
+        #page-fuel .import-zone-label,
+        #page-mileage .import-zone-label {
+            font-family: 'Inter', sans-serif;
+        }
+
+        #page-fuel .import-zone-sub,
+        #page-mileage .import-zone-sub {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ── READABLE FONT OVERRIDES: Overview ── */
+        #page-overview .sec-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+        }
+
+        #page-overview .summary-card h3 {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+            text-transform: none;
+        }
+
+        #page-overview .summary-big {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+        }
+
+        #page-overview .summary-sub {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+        }
+
+        #page-overview .gauge-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.6rem;
+            letter-spacing: 0.5px;
+            text-transform: none;
+        }
+
+        #page-overview .gauge-val {
+            font-family: 'Inter', sans-serif;
+        }
+
+        #page-overview .chip-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.58rem;
+            letter-spacing: 0.5px;
+            text-transform: none;
+        }
+
+        #page-overview .chip-val {
+            font-family: 'Inter', sans-serif;
+        }
+
+        #page-overview .chart-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            letter-spacing: 0.3px;
+            text-transform: none;
+        }
+
+        #page-overview .panel-header {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.78rem;
+            letter-spacing: 0.5px;
+            text-transform: none;
+            font-weight: 700;
+        }
+
+        /* ── PANEL COLLAPSE TOGGLE ── */
+        .panel-toggle {
+            margin-left: auto;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-2);
+            border-radius: 5px;
+            padding: 3px 9px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: color var(--transition), border-color var(--transition), background var(--transition);
+        }
+
+        .panel-toggle:hover {
+            color: var(--cyan);
+            border-color: var(--border-active);
+            background: var(--cyan-dim);
+        }
+
+        /* When input panel is hidden, analytics/logs span full width */
+        .cockpit-grid.input-hidden {
+            grid-template-columns: 1fr;
+        }
+
+        .cockpit-grid.input-hidden .panel-col-input {
+            display: none;
+        }
+        /* ── AUTH MODAL ── */
+        .auth-modal {
+            position: fixed; inset: 0; z-index: 12000;
+            background: var(--bg-void);
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+            display: none;
+        }
+        .auth-modal.show { display: flex; }
+        .auth-modal-box {
+            width: 100%; max-width: 420px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        .auth-modal-title {
+            font-family: var(--font-display);
+            font-size: 1.8rem; font-weight: 800;
+            color: var(--cyan);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .auth-modal-sub {
+            font-size: 0.88rem;
+            color: var(--text-2);
+            margin-bottom: 28px;
+        }
+        .auth-modal-form { display: flex; flex-direction: column; gap: 14px; }
+        .auth-modal input {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-1);
+            padding: 12px 14px;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color var(--transition);
+        }
+        .auth-modal input::placeholder { color: var(--text-3); }
+        .auth-modal input:focus {
+            border-color: rgba(0,229,255,0.5);
+            box-shadow: 0 0 0 3px rgba(0,229,255,0.08);
+        }
+        .auth-modal .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, var(--cyan), #0091ea);
+            border: none;
+            color: #000;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform var(--transition), box-shadow var(--transition);
+        }
+        .auth-modal .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(0,229,255,0.35); }
+        .auth-modal .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .auth-error {
+            background: var(--rose-dim);
+            border: 1px solid rgba(255,61,113,0.3);
+            color: var(--rose);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-bottom: 14px;
+            display: none;
+        }
+        .auth-error.show { display: block; }
+
+        /* NAV ACCOUNT BTN */
+        .nav-account {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+        }
+        .nav-account-email {
+            color: var(--cyan);
+            letter-spacing: 0.5px;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .nav-logout-btn {
+            background: rgba(255,61,113,0.1);
+            border: 1px solid rgba(255,61,113,0.3);
+            color: var(--rose);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: background var(--transition), border-color var(--transition);
+        }
+        .nav-logout-btn:hover { background: rgba(255,61,113,0.2); border-color: rgba(255,61,113,0.5); }
+    </style>
+</head>
+<body>
+
+<!-- AUTH MODAL -->
+<div id="authModal" class="auth-modal">
+    <div class="auth-modal-box">
+        <div class="auth-modal-title">Sportage HQ</div>
+        <div class="auth-modal-sub">Command Center Login</div>
+        <div id="authError" class="auth-error"></div>
+        <form id="loginForm" class="auth-modal-form" onsubmit="return false;">
+            <input id="loginEmail" type="email" placeholder="email address" autocomplete="username email" required>
+            <input id="loginPassword" type="password" placeholder="password" autocomplete="current-password" required>
+            <button type="submit" class="btn-primary" id="loginBtn"><i class="fas fa-bolt" style="margin-right:8px;"></i>Access Command Center</button>
+        </form>
+    </div>
+</div>
+
+<!-- ══════ NAV ══════ -->
+<nav class="nav">
+    <div class="nav-brand">
+        <div class="mark"><i class="fas fa-car"></i></div>
+        Sportage <span>HQ</span>
+    </div>
+    <div class="nav-tabs" id="navTabs">
+        <button class="active" data-tab="overview"><i class="fas fa-th-large"></i>&nbsp; Overview</button>
+        <button data-tab="fuel"><i class="fas fa-gas-pump"></i>&nbsp; FuelOS</button>
+        <button data-tab="mileage"><i class="fas fa-road"></i>&nbsp; MileageOS</button>
+        <button data-tab="data"><i class="fas fa-database"></i>&nbsp; Data Vault</button>
+        <button data-tab="maintenance"><i class="fas fa-wrench"></i>&nbsp; Maintenance</button>
+    </div>
+    <div id="navAccountContainer" class="nav-account" style="display:none;">
+        <span class="nav-account-email" id="navUserEmail"></span>
+        <button id="navLogoutBtn" class="nav-logout-btn"><i class="fas fa-sign-out-alt"></i> logout</button>
+    </div>
+</nav>
+
+<div class="main">
+
+<!-- ════════════════════════════════════════════ -->
+<!-- TAB: OVERVIEW                               -->
+<!-- ════════════════════════════════════════════ -->
+<div id="page-overview" class="tab-page active">
+
+    <div class="sec-label">Command Center Overview</div>
+
+    <!-- Big 3 summary -->
+    <div class="summary-grid">
+        <div class="summary-card">
+            <h3><i class="fas fa-dollar-sign"></i> Total Fuel Spend</h3>
+            <div class="summary-big" id="ovTotalSpend">$0</div>
+            <div class="summary-sub" id="ovMonthlyAvgSpend">Monthly avg: --</div>
+        </div>
+        <div class="summary-card">
+            <h3><i class="fas fa-tachometer-alt"></i> Current Odometer</h3>
+            <div class="summary-big" id="ovOdometer">0</div>
+            <div class="summary-sub" id="ovTotalDriven">Total tracked: --</div>
+        </div>
+        <div class="summary-card">
+            <h3><i class="fas fa-leaf"></i> Lifetime Avg MPG</h3>
+            <div class="summary-big" id="ovAvgMpg">--</div>
+            <div class="summary-sub" id="ovBestMpg">Best: --</div>
+        </div>
+    </div>
+
+    <!-- Expanded metrics -->
+    <div class="sec-label">Cross-System Analytics</div>
+    <div class="gauge-grid g5">
+        <div class="gauge cyan">
+            <div class="glow"></div>
+            <div class="gauge-label"><i class="fas fa-fire"></i> Fuel Logs</div>
+            <div class="gauge-val cyan" id="ovFuelCount">0</div>
+        </div>
+        <div class="gauge amber">
+            <div class="glow"></div>
+            <div class="gauge-label"><i class="fas fa-road"></i> Mileage Logs</div>
+            <div class="gauge-val amber" id="ovMileCount">0</div>
+        </div>
+        <div class="gauge emerald">
+            <div class="glow"></div>
+            <div class="gauge-label"><i class="fas fa-gas-pump"></i> Total Gallons</div>
+            <div class="gauge-val emerald" id="ovTotalGallons">0</div>
+        </div>
+        <div class="gauge rose">
+            <div class="glow"></div>
+            <div class="gauge-label"><i class="fas fa-dollar-sign"></i> Cost/Mile</div>
+            <div class="gauge-val rose" id="ovCostPerMile">--</div>
+        </div>
+        <div class="gauge violet">
+            <div class="glow"></div>
+            <div class="gauge-label"><i class="fas fa-calendar"></i> Days Tracked</div>
+            <div class="gauge-val violet" id="ovDaysTracked">0</div>
+        </div>
+    </div>
+
+    <div class="chip-grid">
+        <div class="chip"><div class="chip-label">Avg $/Gallon</div><div class="chip-val" id="ovAvgPrice">--</div></div>
+        <div class="chip"><div class="chip-label">Avg Trip</div><div class="chip-val" id="ovAvgTrip">--</div></div>
+        <div class="chip"><div class="chip-label">Peak Fuel Day</div><div class="chip-val" id="ovPeakFuelDay">--</div></div>
+        <div class="chip"><div class="chip-label">Weekly Mi Avg</div><div class="chip-val" id="ovWeeklyMiAvg">--</div></div>
+        <div class="chip"><div class="chip-label">Longest Trip</div><div class="chip-val" id="ovLongestTrip">--</div></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-grid">
+        <div class="chart-box">
+            <div class="chart-title">Monthly Fuel Spend</div>
+            <canvas id="chartMonthlySpend"></canvas>
+        </div>
+        <div class="chart-box">
+            <div class="chart-title">MPG Trend</div>
+            <canvas id="chartMpgTrend"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- TAB: FUEL OS                                -->
+<!-- ════════════════════════════════════════════ -->
+<div id="page-fuel" class="tab-page">
+
+    <div class="sec-label">FuelOS — Refuel Tracker</div>
+
+    <div class="cockpit-grid" id="fuelCockpit">
+        <!-- LEFT: Input -->
+        <div class="panel-col-input">
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-gas-pump"></i> Trip Input</div>
+                <div class="panel-body">
+                    <div class="import-zone" onclick="document.getElementById('fuelCsvInput').click()">
+                        <div class="import-zone-label"><i class="fas fa-upload"></i> Import CSV</div>
+                        <div class="import-zone-sub" id="fuelFileInfo">Upload fuel logs to sync</div>
+                        <input type="file" id="fuelCsvInput" accept=".csv,.txt" style="display:none">
+                    </div>
+
+                    <form id="fuelForm" autocomplete="off">
+                        <div class="field">
+                            <div class="field-label">Timestamp</div>
+                            <input type="date" id="fuelDate" required>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Station</div>
+                            <input type="text" id="fuelStation" required placeholder="SHELL, CHEVRON...">
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Fuel Grade</div>
+                            <select id="fuelType" required>
+                                <option value="">SELECT OCTANE</option>
+                                <option value="Regular">Regular (87)</option>
+                                <option value="Mid-Grade">Mid-Grade (89)</option>
+                                <option value="Premium">Premium (91/93)</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Volume (Gal)</div>
+                            <input type="number" id="fuelGallons" step="0.001" min="0.001" required placeholder="00.000">
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Price / Gallon</div>
+                            <input type="number" id="fuelPrice" step="0.001" min="0" required placeholder="0.000">
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Trip Distance (Mi)</div>
+                            <input type="number" id="fuelMiles" step="0.1" min="0" required placeholder="000.0">
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Odometer (Total)</div>
+                            <input type="number" id="fuelOdo" step="1" min="0" required placeholder="000000">
+                        </div>
+                        <button type="submit" class="btn-primary"><i class="fas fa-plus-circle"></i> Log Fuel Stop</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Data -->
+        <div>
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-chart-bar"></i> Fuel Analytics
+                    <button class="panel-toggle" onclick="toggleFuelInput()" id="fuelToggleBtn">
+                        <i class="fas fa-columns"></i> <span id="fuelToggleLabel">Hide Input</span>
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div class="btn-row">
+                        <button class="btn-sm" onclick="fuelMonthlyReport()"><i class="fas fa-calendar-alt"></i> Monthly Report</button>
+                        <button class="btn-sm" onclick="fuelPeakDay()"><i class="fas fa-clock"></i> Peak Activity</button>
+                        <button class="btn-sm" onclick="exportFuelCSV()"><i class="fas fa-download"></i> Export CSV</button>
+                        <button class="btn-sm danger" onclick="resetFuelData()"><i class="fas fa-trash"></i> Reset</button>
+                    </div>
+                    <div id="fuelReport" class="notif"></div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr>
+                                <th>Date</th><th>Station</th><th>Grade</th>
+                                <th>Gal</th><th>$/Gal</th><th>Total</th>
+                                <th>Trip</th><th>MPG</th><th>$/Mi</th><th>Odo</th>
+                            </tr></thead>
+                            <tbody id="fuelTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- TAB: MILEAGE OS                             -->
+<!-- ════════════════════════════════════════════ -->
+<div id="page-mileage" class="tab-page">
+
+    <div class="sec-label">MileageOS — Odometer Tracker</div>
+
+    <div class="cockpit-grid" id="mileageCockpit">
+        <!-- LEFT: Input -->
+        <div class="panel-col-input">
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-tachometer-alt"></i> Trip Computer</div>
+                <div class="panel-body">
+                    <div class="field">
+                        <div class="field-label">Timestamp</div>
+                        <input type="text" id="mileDateTime" placeholder="Select date & time…">
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Odometer Reading (mi)</div>
+                        <input type="number" id="mileOdo" placeholder="Enter mileage…" min="0">
+                    </div>
+                    <button class="btn-primary" onclick="addMileageRecord()" style="margin-bottom:14px"><i class="fas fa-plus-circle"></i> Log Entry</button>
+
+                    <div style="height:1px;background:var(--border);margin:8px 0 14px;"></div>
+                    <div class="field-label" style="margin-bottom:10px">Date Filter</div>
+                    <div class="filter-row">
+                        <input type="text" id="mileStartDate" placeholder="Start">
+                        <input type="text" id="mileEndDate" placeholder="End">
+                        <button class="apply-btn" onclick="applyMileageFilter()"><i class="fas fa-arrow-right"></i></button>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+                        <button class="btn-sm" onclick="mileFilterLastWeek()">Last Week</button>
+                        <button class="btn-sm" onclick="mileFilterLastMonth()">Last Month</button>
+                        <button class="btn-sm" onclick="mileFilterLastQuarter()">Quarter</button>
+                        <button class="btn-sm" onclick="resetMileageFilter()">Reset</button>
+                    </div>
+                    <button class="btn-sm danger" onclick="purgeMileageData()" style="width:100%;justify-content:center;margin-top:6px;">
+                        <i class="fas fa-trash-alt"></i> Factory Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Metrics & Log -->
+        <div>
+            <div class="panel" style="margin-bottom:18px;">
+                <div class="panel-header"><i class="fas fa-chart-line"></i> Live Metrics</div>
+                <div class="panel-body">
+                    <div class="gauge-grid g4">
+                        <div class="gauge cyan"><div class="glow"></div><div class="gauge-label"><i class="fas fa-road"></i> Odometer</div><div class="gauge-val cyan"><span id="mlOdometer">0</span><span class="gauge-unit">mi</span></div></div>
+                        <div class="gauge rose"><div class="glow"></div><div class="gauge-label"><i class="fas fa-calendar-week"></i> This Week</div><div class="gauge-val rose"><span id="mlWeekly">0</span><span class="gauge-unit">mi</span></div></div>
+                        <div class="gauge amber"><div class="glow"></div><div class="gauge-label"><i class="fas fa-route"></i> Last Trip</div><div class="gauge-val amber"><span id="mlLastTrip">0</span><span class="gauge-unit">mi</span></div></div>
+                        <div class="gauge emerald"><div class="glow"></div><div class="gauge-label"><i class="fas fa-chart-line"></i> Wk Average</div><div class="gauge-val emerald"><span id="mlWeekAvg">0</span><span class="gauge-unit">mi</span></div></div>
+                    </div>
+                    <div class="chip-grid" style="grid-template-columns:repeat(6,1fr);">
+                        <div class="chip"><div class="chip-label">Avg Trip</div><div class="chip-val" id="mlAvgTrip">—</div></div>
+                        <div class="chip"><div class="chip-label">Longest Run</div><div class="chip-val" id="mlLongestTrip">—</div></div>
+                        <div class="chip"><div class="chip-label">Peak Day</div><div class="chip-val" id="mlBusiestDay">—</div></div>
+                        <div class="chip"><div class="chip-label">Log Count</div><div class="chip-val" id="mlEntries">0</div></div>
+                        <div class="chip"><div class="chip-label">Total Driven</div><div class="chip-val" id="mlTotalDriven">—</div></div>
+                        <div class="chip"><div class="chip-label">Daily Avg</div><div class="chip-val" id="mlDailyAvg">—</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-list"></i> System Logs
+                    <button class="panel-toggle" onclick="toggleMileageInput()" id="mileageToggleBtn">
+                        <i class="fas fa-columns"></i> <span id="mileageToggleLabel">Hide Input</span>
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr>
+                                <th><i class="far fa-clock"></i> Timestamp</th>
+                                <th>Day</th><th>Odometer</th>
+                                <th>Trip Δ</th><th>Cumulative</th>
+                            </tr></thead>
+                            <tbody id="mileTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- TAB: DATA VAULT                             -->
+<!-- ════════════════════════════════════════════ -->
+<div id="page-data" class="tab-page">
+
+    <div class="sec-label">Data Vault — Import / Export</div>
+
+    <div class="cockpit-grid">
+        <div>
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-file-export"></i> Export All Data</div>
+                <div class="panel-body">
+                    <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:14px;">
+                        Save a complete backup of FuelOS, MileageOS, and Maintenance data as a single JSON file.
+                    </p>
+                    <button class="btn-primary" onclick="exportAllJSON()"><i class="fas fa-download"></i> Export Full Backup (JSON)</button>
+                    <div style="height:12px"></div>
+                    <button class="btn-sm" onclick="exportFuelJSON()" style="width:100%;justify-content:center;margin-bottom:8px;">
+                        <i class="fas fa-gas-pump"></i> Export Fuel Only (JSON)
+                    </button>
+                    <button class="btn-sm" onclick="exportMileageJSON()" style="width:100%;justify-content:center;margin-bottom:8px;">
+                        <i class="fas fa-road"></i> Export Mileage Only (JSON)
+                    </button>
+                    <button class="btn-sm" onclick="exportMaintJSON()" style="width:100%;justify-content:center;">
+                        <i class="fas fa-wrench"></i> Export Maintenance Only (JSON)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-file-import"></i> Import Data</div>
+                <div class="panel-body">
+                    <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:14px;">
+                        Load a previously exported JSON backup. Supports full backup, fuel-only, mileage-only, and maintenance-only formats.
+                    </p>
+                    <div class="import-zone" onclick="document.getElementById('jsonImportInput').click()">
+                        <div class="import-zone-label"><i class="fas fa-upload"></i> Load JSON Backup</div>
+                        <div class="import-zone-sub" id="jsonImportInfo">Click to select a JSON file</div>
+                        <input type="file" id="jsonImportInput" accept=".json" style="display:none">
+                    </div>
+
+                    <div style="height:1px;background:var(--border);margin:14px 0;"></div>
+
+                    <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:14px;">
+                        <strong style="color:var(--text-1);">Data Storage:</strong> All data is synced to Appwrite Cloud in real-time. Use this vault to export/import across devices.
+                    </p>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                        <div class="chip"><div class="chip-label">Fuel Records</div><div class="chip-val" id="vaultFuelCount">0</div></div>
+                        <div class="chip"><div class="chip-label">Mileage Records</div><div class="chip-val" id="vaultMileCount">0</div></div>
+                    </div>
+
+                    <div style="height:14px"></div>
+                    <button class="btn-sm danger" onclick="purgeAllData()" style="width:100%;justify-content:center;">
+                        <i class="fas fa-skull-crossbones"></i> Full System Purge (All Data)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- TAB: MAINTENANCE                            -->
+<!-- ════════════════════════════════════════════ -->
+<div id="page-maintenance" class="tab-page">
+
+    <div class="sec-label">Maintenance — Service Log</div>
+
+    <div class="cockpit-grid">
+        <!-- LEFT: Input -->
+        <div class="panel-col-input">
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-tools"></i> Log Service</div>
+                <div class="panel-body">
+                    <div class="field">
+                        <div class="field-label">Date</div>
+                        <input type="date" id="maintDate">
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Service Type</div>
+                        <select id="maintType">
+                            <option value="">SELECT SERVICE</option>
+                            <option value="Oil Change">Oil Change</option>
+                            <option value="Tire Rotation">Tire Rotation</option>
+                            <option value="Tire Replacement">Tire Replacement</option>
+                            <option value="Brake Service">Brake Service</option>
+                            <option value="Air Filter">Air Filter</option>
+                            <option value="Cabin Filter">Cabin Filter</option>
+                            <option value="Battery">Battery</option>
+                            <option value="Spark Plugs">Spark Plugs</option>
+                            <option value="Transmission Service">Transmission Service</option>
+                            <option value="Coolant Flush">Coolant Flush</option>
+                            <option value="Alignment">Alignment</option>
+                            <option value="Inspection">Inspection</option>
+                            <option value="Scheduled Maintenance">Scheduled Maintenance</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Description / Notes</div>
+                        <input type="text" id="maintNotes" placeholder="Details about the service…">
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Shop / Location</div>
+                        <input type="text" id="maintShop" placeholder="Dealer, shop name…">
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Odometer (mi)</div>
+                        <input type="number" id="maintOdo" min="0" placeholder="000000">
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Cost ($)</div>
+                        <input type="number" id="maintCost" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Next Due Date</div>
+                        <input type="date" id="maintNextDate">
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Next Due Miles</div>
+                        <input type="number" id="maintNextMiles" min="0" placeholder="000000">
+                    </div>
+                    <button class="btn-primary" onclick="addMaintRecord()" style="margin-bottom:10px">
+                        <i class="fas fa-plus-circle"></i> Log Service
+                    </button>
+                    <button class="btn-sm danger" onclick="purgeMaintData()" style="width:100%;justify-content:center;margin-top:4px;">
+                        <i class="fas fa-trash-alt"></i> Clear All Records
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Log Table -->
+        <div>
+            <div class="panel" style="margin-bottom:18px;">
+                <div class="panel-header"><i class="fas fa-chart-bar"></i> Service Summary</div>
+                <div class="panel-body">
+                    <div class="gauge-grid g4">
+                        <div class="gauge cyan"><div class="glow"></div><div class="gauge-label"><i class="fas fa-list"></i> Total Services</div><div class="gauge-val cyan" id="maintCount">0</div></div>
+                        <div class="gauge amber"><div class="glow"></div><div class="gauge-label"><i class="fas fa-dollar-sign"></i> Total Spent</div><div class="gauge-val amber">$<span id="maintTotalCost">0</span></div></div>
+                        <div class="gauge rose"><div class="glow"></div><div class="gauge-label"><i class="fas fa-calendar-alt"></i> Last Service</div><div class="gauge-val rose" style="font-size:1rem" id="maintLastDate">—</div></div>
+                        <div class="gauge emerald"><div class="glow"></div><div class="gauge-label"><i class="fas fa-tachometer-alt"></i> Last Odo</div><div class="gauge-val emerald"><span id="maintLastOdo">—</span></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-list-alt"></i> Service History
+                    <button class="panel-toggle" onclick="toggleMaintInput()" id="maintToggleBtn">
+                        <i class="fas fa-columns"></i> <span id="maintToggleLabel">Hide Input</span>
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr>
+                                <th>Date</th>
+                                <th>Service Type</th>
+                                <th>Description</th>
+                                <th>Shop</th>
+                                <th>Odometer</th>
+                                <th>Cost</th>
+                                <th>Next Due Date</th>
+                                <th>Next Due Mi</th>
+                                <th></th>
+                            </tr></thead>
+                            <tbody id="maintTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div><!-- .main -->
+
+<footer>Sportage HQ &mdash; Command Center &mdash; 2026 &mdash; Designed by Dmytro Nikey</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   SPORTAGE HQ — UNIFIED COMMAND CENTER
+   TZ: America/Los_Angeles
+   ═══════════════════════════════════════════════════ */
+
+const TZ = 'America/Los_Angeles';
+const FUEL_KEY  = 'sportageSmoothRecords';
+const MILE_KEY  = 'mileageData';
+
+let fuelRecords   = [];
+let mileageData   = [];
+let chartMonthly  = null;
+let chartMpg      = null;
+let fpMileMain, fpMileStart, fpMileEnd;
+
+// ── TIMEZONE HELPERS ──
+function getPSTDate() {
+    return new Date().toLocaleDateString('en-CA', { timeZone: TZ });
+}
+
+function nowPacific() {
+    const p = {};
+    new Intl.DateTimeFormat('en-US', {
+        timeZone: TZ, year:'numeric', month:'2-digit', day:'2-digit',
+        hour:'2-digit', minute:'2-digit', hour12:false
+    }).formatToParts(new Date()).forEach(({type, value}) => { p[type] = value; });
+    const hh = p.hour === '24' ? '00' : p.hour;
+    return `${p.year}-${p.month}-${p.day} ${hh}:${p.minute}`;
+}
+
+function ptDateStr(d) { return d.toLocaleDateString('en-CA', { timeZone: TZ }); }
+function ptDayName(d) { return d.toLocaleDateString('en-US', { timeZone: TZ, weekday: 'long' }); }
+
+function formatDisplayDate(ds) {
+    if (!ds) return '';
+    const p = ds.split('-');
+    return p.length === 3 ? `${p[1]}/${p[2]}/${p[0].slice(2)}` : ds;
+}
+
+function getWeekId(d) {
+    const date = new Date(d);
+    const diff = date.getDate() - date.getDay();
+    const sun = new Date(date.setDate(diff));
+    return `${sun.getFullYear()}-${sun.getMonth()}-${sun.getDate()}`;
+}
+
+// ── TOAST ──
+function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ── PANEL TOGGLES ──
+function toggleFuelInput() {
+    const hidden = document.getElementById('fuelCockpit').classList.toggle('input-hidden');
+    document.getElementById('fuelToggleLabel').textContent = hidden ? 'Show Input' : 'Hide Input';
+}
+
+function toggleMileageInput() {
+    const hidden = document.getElementById('mileageCockpit').classList.toggle('input-hidden');
+    document.getElementById('mileageToggleLabel').textContent = hidden ? 'Show Input' : 'Hide Input';
+}
+
+// ── TABS ──
+document.getElementById('navTabs').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'overview') refreshOverview();
+});
+
+// ══════════════════════════════════════════════════
+// FUEL OS
+// ══════════════════════════════════════════════════
+
+async function loadFuel() {
+    if (!window.currentUser) {
+        fuelRecords = [];
+        renderFuelTable();
+        return;
+    }
+    fuelRecords = await window.loadFuelFromAppwrite();
+    renderFuelTable();
+}
+
+document.getElementById('fuelDate').value = getPSTDate();
+
+document.getElementById('fuelForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const gallons = parseFloat(document.getElementById('fuelGallons').value);
+    const miles   = parseFloat(document.getElementById('fuelMiles').value);
+    const ppg     = parseFloat(document.getElementById('fuelPrice').value);
+    const total   = parseFloat((ppg * gallons).toFixed(2));
+
+    const record = {
+        date: document.getElementById('fuelDate').value,
+        station: document.getElementById('fuelStation').value.trim(),
+        type: document.getElementById('fuelType').value,
+        pricePerGallon: ppg,
+        gallons,
+        mileage: parseInt(document.getElementById('fuelOdo').value),
+        milesDriven: miles,
+        totalCost: total,
+        mpg: (gallons > 0 && miles > 0) ? parseFloat((miles / gallons).toFixed(1)) : 0,
+        costPerMile: (miles > 0 && total > 0) ? parseFloat((total / miles).toFixed(3)) : 0
+    };
+
+    try {
+        await window.createFuelRecord(record);
+        await loadFuel();
+        document.getElementById('fuelReport').style.display = 'none';
+        this.reset();
+        document.getElementById('fuelDate').value = getPSTDate();
+        toast('Fuel stop logged');
+    } catch (err) {
+        console.error("Error saving fuel record:", err);
+        toast('Error: ' + (err.message || 'Failed to save'));
+    }
+});
+
+// CSV Import
+document.getElementById('fuelCsvInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const info = document.getElementById('fuelFileInfo');
+    if (!file) return;
+    info.textContent = `Analyzing: ${file.name}...`;
+    info.style.color = 'var(--cyan)';
+    const reader = new FileReader();
+    reader.onload = async function(ev) {
+        try {
+            const rows = ev.target.result.split(/\r\n|\n/);
+            if (rows.length < 1) throw new Error('Empty');
+            const rawH = rows[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g,''));
+            const hmap = {
+                'date':'date','station':'station','type':'type','fuel type':'type',
+                'price per gallon':'pricePerGallon','price/gal':'pricePerGallon','price':'pricePerGallon',
+                'gallons':'gallons','qty':'gallons','quantity':'gallons','volume':'gallons',
+                'mileage':'mileage','odometer':'mileage',
+                'miles driven':'milesDriven','trip':'milesDriven','distance':'milesDriven',
+                'total cost':'totalCost','total':'totalCost','cost':'totalCost',
+                'mpg':'mpg','cost/mile':'costPerMile'
+            };
+            const headers = rawH.map(h => hmap[h] || h);
+            const imported = [];
+            for (let i = 1; i < rows.length; i++) {
+                if (!rows[i].trim()) continue;
+                const vals = rows[i].split(',').map(v => v.trim().replace(/"/g,''));
+                const rec = {};
+                headers.forEach((h,idx) => { if(vals[idx] !== undefined) rec[hmap[h]||h] = vals[idx]; });
+
+                if (rec.date) {
+                    if (rec.date.includes('/')) {
+                        const dp = rec.date.split('/');
+                        if (dp.length === 3) { let y=dp[2]; if(y.length===2) y='20'+y; rec.date=`${y}-${dp[0].padStart(2,'0')}-${dp[1].padStart(2,'0')}`; }
+                    } else if (rec.date.includes('T')) { rec.date = rec.date.split('T')[0]; }
+                } else { rec.date = getPSTDate(); }
+
+                rec.station = rec.station || 'UNK';
+                rec.type = rec.type || 'UNK';
+                rec.pricePerGallon = parseFloat(rec.pricePerGallon) || 0;
+                rec.gallons = parseFloat(rec.gallons) || 0;
+                rec.mileage = parseInt(rec.mileage) || 0;
+                rec.milesDriven = parseFloat(rec.milesDriven) || 0;
+                rec.totalCost = parseFloat(rec.totalCost);
+                if (isNaN(rec.totalCost) || rec.totalCost <= 0) {
+                    if (rec.pricePerGallon > 0 && rec.gallons > 0) rec.totalCost = parseFloat((rec.pricePerGallon * rec.gallons).toFixed(2));
+                }
+                const csvMpg = parseFloat(rec.mpg);
+                const csvCpm = parseFloat(rec.costPerMile);
+                rec.mpg = (!isNaN(csvMpg) && csvMpg > 0) ? csvMpg : (rec.gallons > 0 && rec.milesDriven > 0) ? parseFloat((rec.milesDriven / rec.gallons).toFixed(1)) : 0;
+                rec.costPerMile = (!isNaN(csvCpm) && csvCpm > 0) ? csvCpm : (rec.milesDriven > 0 && rec.totalCost > 0) ? parseFloat((rec.totalCost / rec.milesDriven).toFixed(3)) : 0;
+                if (rec.totalCost > 0 || (rec.gallons > 0 && rec.milesDriven > 0)) imported.push(rec);
+            }
+
+            // Save each record to Appwrite
+            let savedCount = 0;
+            for (const rec of imported) {
+                try {
+                    await window.createFuelRecord(rec);
+                    savedCount++;
+                } catch (err) {
+                    console.error("Error saving fuel record:", err);
+                }
+            }
+
+            await loadFuel();
+            info.textContent = `Synced: ${savedCount} records`;
+            toast(`${savedCount} fuel records imported`);
+        } catch(err) { info.textContent = `Error: ${err.message}`; info.style.color = 'var(--rose)'; }
+        e.target.value = null;
+    };
+    reader.readAsText(file);
+});
+
+function renderFuelTable() {
+    const tb = document.getElementById('fuelTableBody');
+    tb.innerHTML = '';
+    fuelRecords.forEach((r, i) => {
+        const prev = fuelRecords[i+1];
+        let mpgClass = '';
+        if (r.mpg > 0 && prev && prev.mpg > 0) {
+            if (r.mpg > prev.mpg) mpgClass = 'td-cyan';
+            else if (r.mpg < prev.mpg) mpgClass = 'td-rose';
+        }
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="td-highlight">${formatDisplayDate(r.date)}</td>
+            <td style="text-transform:capitalize">${r.station}</td>
+            <td>${r.type}</td>
+            <td>${r.gallons ? r.gallons.toFixed(3) : '-'}</td>
+            <td>${r.pricePerGallon ? r.pricePerGallon.toFixed(3) : '-'}</td>
+            <td class="td-highlight">$${r.totalCost.toFixed(2)}</td>
+            <td>${r.milesDriven ? r.milesDriven.toFixed(1) : '-'}</td>
+            <td class="${mpgClass}" style="font-weight:600">${r.mpg ? r.mpg.toFixed(1) : '-'}</td>
+            <td>${r.costPerMile ? r.costPerMile.toFixed(3) : '-'}</td>
+            <td class="td-mono" style="color:var(--text-3)">${r.mileage}</td>
+        `;
+        tb.appendChild(tr);
+    });
+}
+
+function fuelMonthlyReport() {
+    const area = document.getElementById('fuelReport');
+    if (!fuelRecords.length) { area.innerHTML='No data.'; area.style.display='block'; return; }
+    const mt = {};
+    fuelRecords.forEach(r => { if(r.date && r.totalCost) { const my = r.date.substring(0,7); mt[my] = (mt[my]||0) + r.totalCost; } });
+    let html = '<div style="margin-bottom:10px;font-weight:700;font-family:var(--font-display);color:var(--cyan);">MONTHLY EXPENDITURE</div>';
+    Object.keys(mt).sort().reverse().forEach(my => {
+        const [y,m] = my.split('-');
+        const mn = new Date(parseInt(y), parseInt(m)-1).toLocaleString('default',{month:'long'});
+        html += `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)"><span>${mn} ${y}</span><span style="font-weight:600">$${mt[my].toFixed(2)}</span></div>`;
+    });
+    area.innerHTML = html; area.style.display = 'block';
+}
+
+function fuelPeakDay() {
+    const area = document.getElementById('fuelReport');
+    if (!fuelRecords.length) { area.innerHTML='No data.'; area.style.display='block'; return; }
+    const dc = {};
+    fuelRecords.forEach(r => {
+        try { const d = new Date(r.date+'T00:00:00'); const day = d.toLocaleDateString('en-US',{weekday:'long'}); dc[day] = (dc[day]||0)+1; } catch(e){}
+    });
+    let max=0, peak='N/A';
+    for (const d in dc) { if(dc[d]>max){max=dc[d];peak=d;} }
+    area.innerHTML = `<span style="color:var(--cyan);font-family:var(--font-display);font-weight:700;">PEAK ACTIVITY:</span> <strong style="color:white;text-transform:uppercase;">${peak}</strong> (${max} stops)`;
+    area.style.display = 'block';
+}
+
+function exportFuelCSV() {
+    if (!fuelRecords.length) { toast('No fuel data'); return; }
+    const headers = ['Date','Station','Type','Gallons','Price/Gal','Total Cost','Miles Driven','MPG','Cost/Mile','Mileage'];
+    const csv = [headers.join(','), ...fuelRecords.map(r => [r.date,r.station,r.type,r.gallons.toFixed(3),r.pricePerGallon.toFixed(3),r.totalCost.toFixed(2),r.milesDriven.toFixed(1),r.mpg.toFixed(1),r.costPerMile.toFixed(3),r.mileage].join(','))].join('\n');
+    downloadBlob(csv, `sportage_fuel_${getPSTDate()}.csv`, 'text/csv');
+    toast('Fuel CSV exported');
+}
+
+async function resetFuelData() {
+    if (!fuelRecords.length) return;
+    if (confirm('Wipe all fuel data? This cannot be undone.')) {
+        try {
+            const fuelRes = await window.appwriteDB.listDocuments(DB_ID, FUEL_COL, [
+                window.appwriteQuery.equal("userId", window.currentUser.$id)
+            ]);
+            for (const doc of fuelRes.documents) {
+                await window.appwriteDB.deleteDocument(DB_ID, FUEL_COL, doc.$id);
+            }
+            fuelRecords = [];
+            renderFuelTable();
+            document.getElementById('fuelReport').style.display = 'none';
+            toast('Fuel data wiped');
+        } catch (err) {
+            console.error("Error resetting fuel data:", err);
+            toast('Error: ' + (err.message || 'Failed to reset'));
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════
+// MILEAGE OS
+// ══════════════════════════════════════════════════
+
+async function loadMileage() {
+    if (!window.currentUser) {
+        mileageData = [];
+        processAndRenderMileage([]);
+        return;
+    }
+    mileageData = await window.loadMileageFromAppwrite();
+    if (mileageData.length > 0) processAndRenderMileage(mileageData);
+}
+
+async function addMileageRecord() {
+    const dt = document.getElementById('mileDateTime').value;
+    const odo = parseInt(document.getElementById('mileOdo').value, 10);
+    if (!dt || isNaN(odo) || odo < 0) { alert('Invalid input.'); return; }
+
+    const record = { dateTime: dt, currentMileage: odo };
+
+    try {
+        await window.createMileageRecord(record);
+        await loadMileage();
+        resetMileageFilter();
+        document.getElementById('mileOdo').value = '';
+        fpMileMain.setDate(nowPacific(), true);
+        toast('Mileage entry logged');
+    } catch (err) {
+        console.error("Error saving mileage record:", err);
+        toast('Error: ' + (err.message || 'Failed to save'));
+    }
+}
+
+function recalcMileage(data) {
+    if (!data.length) return [];
+    const first = new Date(data[0].dateTime);
+    const before = mileageData.slice().reverse().find(d => new Date(d.dateTime) < first);
+    let prevMile = before ? before.currentMileage : data[0].currentMileage;
+    let total = 0;
+    return data.map((r, i) => {
+        const prev = i > 0 ? data[i-1].currentMileage : prevMile;
+        const diff = Math.max(0, r.currentMileage - prev);
+        total += diff;
+        return { ...r, mileageDifference: diff, totalMileage: total };
+    });
+}
+
+function processAndRenderMileage(data) {
+    const calc = recalcMileage(data);
+    renderMileageTable(calc);
+    updateMileageGauges(calc);
+    updateMileageChips(calc);
+}
+
+function renderMileageTable(data) {
+    const tb = document.getElementById('mileTableBody');
+    tb.innerHTML = '';
+    const dc = {};
+    data.forEach(r => { const d = ptDateStr(new Date(r.dateTime)); dc[d] = (dc[d]||0)+1; r._isGas = dc[d] > 1; });
+    [...data].reverse().forEach(r => {
+        const d = new Date(r.dateTime);
+        const day = ptDayName(d);
+        const tr = document.createElement('tr');
+        if (day === 'Friday') tr.classList.add('friday-row');
+        if (day === 'Monday') tr.classList.add('monday-row');
+        const gas = r._isGas ? `<span class="gas-icon"><i class="fas fa-gas-pump"></i></span>` : '';
+        const fmt = d.toLocaleString('en-US', { timeZone: TZ, year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+        tr.innerHTML = `
+            <td>${fmt}${gas}</td>
+            <td>${day}</td>
+            <td class="td-mono td-cyan">${r.currentMileage.toLocaleString()}</td>
+            <td class="td-mono td-highlight">+${r.mileageDifference.toLocaleString()}</td>
+            <td>${r.totalMileage.toLocaleString()}</td>
+        `;
+        tb.appendChild(tr);
+    });
+}
+
+function updateMileageGauges(data) {
+    if (!data.length) { ['mlOdometer','mlWeekly','mlLastTrip','mlWeekAvg'].forEach(id => document.getElementById(id).textContent = '0'); return; }
+    document.getElementById('mlOdometer').textContent = data[data.length-1].currentMileage.toLocaleString();
+    document.getElementById('mlLastTrip').textContent = data[data.length-1].mileageDifference.toLocaleString();
+    // "This Week" = latest odometer − Sunday's odometer (the week's starting baseline)
+    const now = new Date();
+    const sundayStart = new Date(now);
+    sundayStart.setDate(now.getDate() - now.getDay());
+    sundayStart.setHours(0, 0, 0, 0);
+    const mondayStart = new Date(sundayStart);
+    mondayStart.setDate(sundayStart.getDate() + 1);
+    let weekBaseline = null;
+    for (let i = data.length - 1; i >= 0; i--) {
+        if (new Date(data[i].dateTime) < mondayStart) { weekBaseline = data[i].currentMileage; break; }
+    }
+    const latestMileage = data[data.length-1].currentMileage;
+    document.getElementById('mlWeekly').textContent = (weekBaseline !== null ? Math.max(0, latestMileage - weekBaseline) : 0).toLocaleString();
+    const wk = {};
+    data.forEach(r => { const w = getWeekId(new Date(r.dateTime)); wk[w] = (wk[w]||0) + r.mileageDifference; });
+    const wks = Object.keys(wk).length || 1;
+    document.getElementById('mlWeekAvg').textContent = Math.round(data[data.length-1].totalMileage / wks).toLocaleString();
+}
+
+function updateMileageChips(data) {
+    const el = id => document.getElementById(id);
+    el('mlEntries').textContent = data.length;
+    if (!data.length) { ['mlAvgTrip','mlLongestTrip','mlBusiestDay','mlTotalDriven','mlDailyAvg'].forEach(id => el(id).textContent = '—'); return; }
+    const trips = data.map(d => d.mileageDifference);
+    const totalT = trips.reduce((s,t) => s+t, 0);
+    el('mlAvgTrip').textContent = `${(totalT/trips.length).toFixed(1)} mi`;
+    el('mlLongestTrip').textContent = `${Math.max(...trips).toLocaleString()} mi`;
+    el('mlTotalDriven').textContent = `${totalT.toLocaleString()} mi`;
+    const udays = new Set(data.map(r => new Date(r.dateTime).toDateString())).size || 1;
+    el('mlDailyAvg').textContent = `${Math.round(totalT/udays).toLocaleString()} mi`;
+    const dm = {0:0,1:0,2:0,3:0,4:0,5:0,6:0};
+    const dn = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    data.forEach(r => { dm[new Date(r.dateTime).getDay()] += r.mileageDifference; });
+    let bi=-1, mx=-1; for(const d in dm){if(dm[d]>mx){mx=dm[d];bi=d;}} el('mlBusiestDay').textContent = mx>0?dn[bi]:'—';
+}
+
+// Mileage Filters
+function applyMileageFilter() {
+    const s = fpMileStart.selectedDates[0], e = fpMileEnd.selectedDates[0];
+    if (!s || !e) { alert('Select both dates.'); return; }
+    const start = new Date(s).setHours(0,0,0,0), end = new Date(e).setHours(23,59,59,999);
+    processAndRenderMileage(mileageData.filter(r => { const d = new Date(r.dateTime); return d >= start && d <= end; }));
+}
+
+function setMileFilter(s, e) { fpMileStart.setDate(s,true); fpMileEnd.setDate(e,true); applyMileageFilter(); }
+
+function mileFilterLastWeek() {
+    const now = new Date(); const t = now.getDay();
+    const end = new Date(now.setDate(now.getDate()-t-1));
+    const start = new Date(new Date().setDate(end.getDate()-6));
+    setMileFilter(start, end);
+}
+
+function mileFilterLastMonth() {
+    const n = new Date();
+    setMileFilter(new Date(n.getFullYear(),n.getMonth()-1,1), new Date(n.getFullYear(),n.getMonth(),0));
+}
+
+function mileFilterLastQuarter() {
+    const n = new Date(), q = Math.floor(n.getMonth()/3);
+    let s, e;
+    if (q===0) { s=new Date(n.getFullYear()-1,9,1); e=new Date(n.getFullYear()-1,11,31); }
+    else { const sm=(q-1)*3; s=new Date(n.getFullYear(),sm,1); e=new Date(n.getFullYear(),sm+3,0); }
+    setMileFilter(s, e);
+}
+
+function resetMileageFilter() {
+    fpMileStart.clear(); fpMileEnd.clear();
+    processAndRenderMileage(mileageData);
+}
+
+async function purgeMileageData() {
+    if (confirm('Permanently delete all mileage logs?')) {
+        try {
+            await window.deleteMileageRecordsForUser();
+            mileageData = [];
+            processAndRenderMileage([]);
+            toast('Mileage data purged');
+        } catch (err) {
+            console.error("Error purging mileage data:", err);
+            toast('Error: ' + (err.message || 'Failed to purge'));
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════
+// OVERVIEW
+// ══════════════════════════════════════════════════
+
+function refreshOverview() {
+    const el = id => document.getElementById(id);
+
+    // Fuel stats
+    const fc = fuelRecords.length;
+    el('ovFuelCount').textContent = fc;
+    const totalSpend = fuelRecords.reduce((s,r) => s + (r.totalCost||0), 0);
+    el('ovTotalSpend').textContent = '$' + totalSpend.toFixed(2);
+    const totalGal = fuelRecords.reduce((s,r) => s + (r.gallons||0), 0);
+    el('ovTotalGallons').textContent = totalGal.toFixed(1);
+
+    // Monthly avg spend
+    if (fc > 0) {
+        const months = {};
+        fuelRecords.forEach(r => { if(r.date) { const m = r.date.substring(0,7); months[m] = (months[m]||0) + r.totalCost; }});
+        const mc = Object.keys(months).length || 1;
+        el('ovMonthlyAvgSpend').textContent = `Monthly avg: $${(totalSpend / mc).toFixed(2)}`;
+    } else { el('ovMonthlyAvgSpend').textContent = 'Monthly avg: --'; }
+
+    // Avg price
+    const priced = fuelRecords.filter(r => r.pricePerGallon > 0);
+    el('ovAvgPrice').textContent = priced.length ? '$' + (priced.reduce((s,r)=>s+r.pricePerGallon,0)/priced.length).toFixed(3) : '--';
+
+    // MPG
+    const mpgRecs = fuelRecords.filter(r => r.mpg > 0);
+    const avgMpg = mpgRecs.length ? (mpgRecs.reduce((s,r)=>s+r.mpg,0)/mpgRecs.length) : 0;
+    el('ovAvgMpg').textContent = avgMpg > 0 ? avgMpg.toFixed(1) : '--';
+    el('ovBestMpg').textContent = mpgRecs.length ? 'Best: ' + Math.max(...mpgRecs.map(r=>r.mpg)).toFixed(1) + ' mpg' : 'Best: --';
+
+    // Cost per mile (fuel)
+    const totalFuelMi = fuelRecords.reduce((s,r)=>s+(r.milesDriven||0),0);
+    el('ovCostPerMile').textContent = totalFuelMi > 0 ? '$' + (totalSpend/totalFuelMi).toFixed(3) : '--';
+
+    // Avg trip from fuel
+    const tripped = fuelRecords.filter(r => r.milesDriven > 0);
+    el('ovAvgTrip').textContent = tripped.length ? (tripped.reduce((s,r)=>s+r.milesDriven,0)/tripped.length).toFixed(1)+' mi' : '--';
+
+    // Peak fuel day
+    const fdc = {};
+    fuelRecords.forEach(r => { try{ const d = new Date(r.date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short'}); fdc[d]=(fdc[d]||0)+1; }catch(e){} });
+    let pfd='--', pfm=0; for(const d in fdc){if(fdc[d]>pfm){pfm=fdc[d];pfd=d;}} el('ovPeakFuelDay').textContent = pfd;
+
+    // Mileage stats
+    const mc2 = mileageData.length;
+    el('ovMileCount').textContent = mc2;
+
+    if (mc2 > 0) {
+        const calc = recalcMileage(mileageData);
+        const lastOdo = calc[calc.length-1].currentMileage;
+        el('ovOdometer').textContent = lastOdo.toLocaleString();
+        const totalDriven = calc[calc.length-1].totalMileage;
+        el('ovTotalDriven').textContent = `Total tracked: ${totalDriven.toLocaleString()} mi`;
+
+        const wk = {};
+        calc.forEach(r => { const w = getWeekId(new Date(r.dateTime)); wk[w]=(wk[w]||0)+r.mileageDifference; });
+        const wks = Object.keys(wk).length||1;
+        el('ovWeeklyMiAvg').textContent = Math.round(totalDriven/wks).toLocaleString()+' mi';
+
+        const trips = calc.map(d => d.mileageDifference);
+        el('ovLongestTrip').textContent = Math.max(...trips).toLocaleString()+' mi';
+    } else {
+        el('ovOdometer').textContent = '0';
+        el('ovTotalDriven').textContent = 'Total tracked: --';
+        el('ovWeeklyMiAvg').textContent = '--';
+        el('ovLongestTrip').textContent = '--';
+    }
+
+    // Days tracked
+    const allDates = new Set();
+    fuelRecords.forEach(r => { if(r.date) allDates.add(r.date); });
+    mileageData.forEach(r => { if(r.dateTime) allDates.add(r.dateTime.split(' ')[0]); });
+    el('ovDaysTracked').textContent = allDates.size;
+
+    // Charts
+    renderOverviewCharts();
+}
+
+function renderOverviewCharts() {
+    // Monthly spend chart
+    const monthlyTotals = {};
+    fuelRecords.forEach(r => { if(r.date && r.totalCost){ const m = r.date.substring(0,7); monthlyTotals[m]=(monthlyTotals[m]||0)+r.totalCost; }});
+    const mKeys = Object.keys(monthlyTotals).sort();
+    const mLabels = mKeys.map(k => { const [y,m]=k.split('-'); return new Date(parseInt(y),parseInt(m)-1).toLocaleString('default',{month:'short',year:'2-digit'}); });
+    const mVals = mKeys.map(k => monthlyTotals[k]);
+
+    if (chartMonthly) chartMonthly.destroy();
+    chartMonthly = new Chart(document.getElementById('chartMonthlySpend'), {
+        type:'bar',
+        data:{ labels:mLabels, datasets:[{ label:'Spend ($)', data:mVals, backgroundColor:'rgba(0,229,255,0.25)', borderColor:'rgba(0,229,255,0.8)', borderWidth:1, borderRadius:4 }] },
+        options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{ticks:{color:'#6b7394',callback:v=>'$'+v},grid:{color:'rgba(255,255,255,0.04)'}}, x:{ticks:{color:'#6b7394'},grid:{display:false}} } }
+    });
+
+    // MPG trend
+    const mpgData = fuelRecords.filter(r=>r.mpg>0).slice().reverse();
+    const mpgLabels = mpgData.map(r => formatDisplayDate(r.date));
+    const mpgVals = mpgData.map(r => r.mpg);
+
+    if (chartMpg) chartMpg.destroy();
+    chartMpg = new Chart(document.getElementById('chartMpgTrend'), {
+        type:'line',
+        data:{ labels:mpgLabels, datasets:[{ label:'MPG', data:mpgVals, borderColor:'var(--emerald)', backgroundColor:'rgba(0,224,150,0.08)', fill:true, tension:0.3, pointRadius:3, pointBackgroundColor:'var(--emerald)' }] },
+        options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{ticks:{color:'#6b7394'},grid:{color:'rgba(255,255,255,0.04)'}}, x:{ticks:{color:'#6b7394',maxTicksLimit:10},grid:{display:false}} } }
+    });
+}
+
+// ══════════════════════════════════════════════════
+// DATA VAULT — JSON IMPORT / EXPORT
+// ══════════════════════════════════════════════════
+
+function downloadBlob(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function exportAllJSON() {
+    const payload = {
+        version: 1,
+        exportDate: new Date().toISOString(),
+        fuel: fuelRecords,
+        mileage: mileageData,
+        maintenance: maintRecords
+    };
+    downloadBlob(JSON.stringify(payload, null, 2), `sportage_hq_backup_${getPSTDate()}.json`, 'application/json');
+    toast('Full backup exported');
+}
+
+function exportFuelJSON() {
+    if (!fuelRecords.length) { toast('No fuel data'); return; }
+    const payload = { version: 1, type: 'fuel', exportDate: new Date().toISOString(), fuel: fuelRecords };
+    downloadBlob(JSON.stringify(payload, null, 2), `sportage_fuel_${getPSTDate()}.json`, 'application/json');
+    toast('Fuel data exported');
+}
+
+function exportMileageJSON() {
+    if (!mileageData.length) { toast('No mileage data'); return; }
+    // Match original MileageOS export format
+    const calc = recalcMileage(mileageData);
+    let cumWk = 0, curWkId = '';
+    const exportData = calc.map(r => {
+        const d = new Date(r.dateTime);
+        const wid = getWeekId(d);
+        if (wid !== curWkId) { curWkId = wid; cumWk = 0; }
+        cumWk += r.mileageDifference;
+        const dd = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+        dd.setUTCDate(dd.getUTCDate()+4-(dd.getUTCDay()||7));
+        const ys = new Date(Date.UTC(dd.getUTCFullYear(),0,1));
+        const wn = Math.ceil((((dd-ys)/86400000)+1)/7);
+        return { dateTime:r.dateTime, currentMileage:r.currentMileage, mileageDifference:r.mileageDifference, weekNumber:wn, weeklyMileage:cumWk, totalMileage:r.totalMileage };
+    }).reverse();
+    const payload = { version: 1, type: 'mileage', exportDate: new Date().toISOString(), mileage: exportData };
+    downloadBlob(JSON.stringify(payload, null, 2), `sportage_mileage_${getPSTDate()}.json`, 'application/json');
+    toast('Mileage data exported');
+}
+
+function exportMaintJSON() {
+    if (!maintRecords.length) { toast('No maintenance data'); return; }
+    const payload = { version: 1, type: 'maintenance', exportDate: new Date().toISOString(), maintenance: maintRecords };
+    downloadBlob(JSON.stringify(payload, null, 2), `sportage_maintenance_${getPSTDate()}.json`, 'application/json');
+    toast('Maintenance data exported');
+}
+
+// JSON Import
+document.getElementById('jsonImportInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const info = document.getElementById('jsonImportInfo');
+    if (!file) return;
+    info.textContent = `Loading: ${file.name}...`;
+    info.style.color = 'var(--cyan)';
+    const reader = new FileReader();
+    reader.onload = async function(ev) {
+        try {
+            const data = JSON.parse(ev.target.result);
+            let fuelImported = 0, mileImported = 0, maintImported = 0;
+
+            // Full backup format
+            if (data.fuel && Array.isArray(data.fuel)) {
+                // Save each fuel record to Appwrite
+                for (const rec of data.fuel) {
+                    try {
+                        await window.createFuelRecord(rec);
+                        fuelImported++;
+                    } catch (err) {
+                        console.error("Error saving fuel record:", err);
+                    }
+                }
+                await loadFuel();
+                renderFuelTable();
+            }
+
+            if (data.mileage && Array.isArray(data.mileage)) {
+                // Could be the recalc'd export format or raw format
+                const mileRecords = data.mileage.map(r => ({
+                    dateTime: r.dateTime,
+                    currentMileage: r.currentMileage
+                }));
+                // Save each record to Appwrite
+                for (const rec of mileRecords) {
+                    try {
+                        await window.createMileageRecord(rec);
+                        mileImported++;
+                    } catch (err) {
+                        console.error("Error saving mileage record:", err);
+                    }
+                }
+                await loadMileage();
+                resetMileageFilter();
+            }
+
+            if (data.maintenance && Array.isArray(data.maintenance)) {
+                // Save each maintenance record to Appwrite
+                for (const rec of data.maintenance) {
+                    try {
+                        await window.createMaintRecord(rec);
+                        maintImported++;
+                    } catch (err) {
+                        console.error("Error saving maintenance record:", err);
+                    }
+                }
+                await loadMaint();
+            }
+
+            // Legacy MileageOS format (bare array)
+            if (Array.isArray(data) && data.length > 0 && data[0].dateTime !== undefined && data[0].currentMileage !== undefined) {
+                const mileRecords = data.map(r => ({
+                    dateTime: r.dateTime,
+                    currentMileage: r.currentMileage
+                }));
+                // Save each record to Appwrite
+                for (const rec of mileRecords) {
+                    try {
+                        await window.createMileageRecord(rec);
+                        mileImported++;
+                    } catch (err) {
+                        console.error("Error saving mileage record:", err);
+                    }
+                }
+                await loadMileage();
+                resetMileageFilter();
+            }
+
+            updateVaultCounts();
+            const totalImported = fuelImported + mileImported + maintImported;
+            const parts = [];
+            if (fuelImported > 0) parts.push(`${fuelImported} fuel`);
+            if (mileImported > 0) parts.push(`${mileImported} mileage`);
+            if (maintImported > 0) parts.push(`${maintImported} maintenance`);
+            info.textContent = `Loaded: ${parts.join(' + ') || 'no data'}`;
+            toast(`Data imported: ${totalImported} records`);
+        } catch(err) {
+            info.textContent = `Error: ${err.message}`;
+            info.style.color = 'var(--rose)';
+        }
+        e.target.value = null;
+    };
+    reader.readAsText(file);
+});
+
+async function purgeAllData() {
+    if (confirm('⚠️ FULL SYSTEM PURGE\n\nDelete ALL fuel and mileage data?\nThis cannot be undone.')) {
+        try {
+            // Delete all fuel records
+            const fuelRes = await window.appwriteDB.listDocuments(DB_ID, FUEL_COL, [
+                window.appwriteQuery.equal("userId", window.currentUser.$id)
+            ]);
+            for (const doc of fuelRes.documents) {
+                await window.appwriteDB.deleteDocument(DB_ID, FUEL_COL, doc.$id);
+            }
+
+            // Delete all mileage records
+            await window.deleteMileageRecordsForUser();
+
+            fuelRecords = []; mileageData = [];
+            renderFuelTable();
+            processAndRenderMileage([]);
+            updateVaultCounts();
+            toast('All data purged');
+        } catch (err) {
+            console.error("Error purging all data:", err);
+            toast('Error: ' + (err.message || 'Failed to purge'));
+        }
+    }
+}
+
+function updateVaultCounts() {
+    document.getElementById('vaultFuelCount').textContent = fuelRecords.length;
+    document.getElementById('vaultMileCount').textContent = mileageData.length;
+}
+
+// ══════════════════════════════════════════════════
+// MAINTENANCE
+// ══════════════════════════════════════════════════
+
+const MAINT_KEY = 'sportageMaintenanceData';
+let maintRecords = [];
+
+async function loadMaint() {
+    if (!window.currentUser) {
+        maintRecords = [];
+        renderMaintTable();
+        updateMaintSummary();
+        return;
+    }
+    maintRecords = await window.loadMaintFromAppwrite();
+    renderMaintTable();
+    updateMaintSummary();
+}
+
+async function addMaintRecord() {
+    const date      = document.getElementById('maintDate').value.trim();
+    const type      = document.getElementById('maintType').value;
+    const notes     = document.getElementById('maintNotes').value.trim();
+    const shop      = document.getElementById('maintShop').value.trim();
+    const odo       = document.getElementById('maintOdo').value;
+    const cost      = document.getElementById('maintCost').value;
+    const nextDate  = document.getElementById('maintNextDate').value.trim();
+    const nextMiles = document.getElementById('maintNextMiles').value;
+
+    if (!date || !type) { toast('Date and Service Type are required.'); return; }
+
+    const record = {
+        date, type, notes, shop,
+        odo:       odo       ? parseInt(odo)       : null,
+        cost:      cost      ? parseFloat(cost)    : null,
+        nextDate:  nextDate  || null,
+        nextMiles: nextMiles ? parseInt(nextMiles) : null
+    };
+
+    try {
+        await window.createMaintRecord(record);
+        await loadMaint();
+        ['maintDate','maintType','maintNotes','maintShop','maintOdo','maintCost','maintNextDate','maintNextMiles']
+            .forEach(id => { const el = document.getElementById(id); el.value = ''; });
+        toast('Service logged.');
+    } catch (err) {
+        console.error("Error saving maintenance record:", err);
+        toast('Error: ' + (err.message || 'Failed to save'));
+    }
+}
+
+async function deleteMaintRecord(docId) {
+    try {
+        await window.deleteMaintRecordFromAppwrite(docId);
+        await loadMaint();
+    } catch (err) {
+        console.error("Error deleting maintenance record:", err);
+        toast('Error: ' + (err.message || 'Failed to delete'));
+    }
+}
+
+function renderMaintTable() {
+    const tbody = document.getElementById('maintTableBody');
+    if (!tbody) return;
+    if (!maintRecords.length) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-2);padding:24px;">No records yet</td></tr>';
+        return;
+    }
+    tbody.innerHTML = maintRecords.map(r => `
+        <tr>
+            <td>${r.date || '—'}</td>
+            <td>${r.type || '—'}</td>
+            <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${r.notes || ''}">${r.notes || '—'}</td>
+            <td>${r.shop || '—'}</td>
+            <td style="text-align:right">${r.odo != null ? r.odo.toLocaleString() : '—'}</td>
+            <td style="text-align:right">${r.cost != null ? '$' + r.cost.toFixed(2) : '—'}</td>
+            <td>${r.nextDate || '—'}</td>
+            <td style="text-align:right">${r.nextMiles != null ? r.nextMiles.toLocaleString() : '—'}</td>
+            <td style="text-align:center">
+                <button class="btn-sm danger" style="padding:2px 8px;font-size:0.7rem;" onclick="deleteMaintRecord('${r.$id}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updateMaintSummary() {
+    document.getElementById('maintCount').textContent = maintRecords.length;
+    const total = maintRecords.reduce((s, r) => s + (r.cost || 0), 0);
+    document.getElementById('maintTotalCost').textContent = total.toFixed(2);
+    const sorted = [...maintRecords].filter(r => r.date).sort((a,b) => b.date.localeCompare(a.date));
+    document.getElementById('maintLastDate').textContent = sorted.length ? sorted[0].date : '—';
+    const withOdo = sorted.filter(r => r.odo != null);
+    document.getElementById('maintLastOdo').textContent = withOdo.length ? withOdo[0].odo.toLocaleString() + ' mi' : '—';
+}
+
+async function purgeMaintData() {
+    if (!confirm('Delete all maintenance records? This cannot be undone.')) return;
+    try {
+        await window.deleteMaintRecordsForUser();
+        maintRecords = [];
+        renderMaintTable();
+        updateMaintSummary();
+        toast('Maintenance data cleared.');
+    } catch (err) {
+        console.error("Error purging maintenance data:", err);
+        toast('Error: ' + (err.message || 'Failed to purge'));
+    }
+}
+
+function toggleMaintInput() {
+    const col = document.querySelector('#page-maintenance .panel-col-input');
+    const btn = document.getElementById('maintToggleBtn');
+    const lbl = document.getElementById('maintToggleLabel');
+    if (!col) return;
+    const hidden = col.style.display === 'none';
+    col.style.display = hidden ? '' : 'none';
+    lbl.textContent = hidden ? 'Hide Input' : 'Show Input';
+}
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════
+// INIT FLATPICKR (before auth check)
+// ══════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    fpMileMain  = flatpickr('#mileDateTime', { enableTime:true, dateFormat:'Y-m-d H:i', time_24hr:true, defaultDate:nowPacific() });
+    fpMileStart = flatpickr('#mileStartDate', { dateFormat:'Y-m-d' });
+    fpMileEnd   = flatpickr('#mileEndDate',   { dateFormat:'Y-m-d' });
+});
+
+// ══════════════════════════════════════════════════
+// INIT DATA LOADING (after auth check in module)
+// ══════════════════════════════════════════════════
+async function initAppData() {
+    try {
+        await loadFuel();
+        await loadMileage();
+        await loadMaint();
+        updateVaultCounts();
+        refreshOverview();
+    } catch (err) {
+        console.error("Error initializing app data:", err);
+    }
+}
+
+window.initAppData = initAppData;
+</script>
+
+<script type="module">
+import { Client, Account, Databases, ID, Query, Permission, Role } from "https://esm.sh/appwrite@16.0.2";
+
+// ════════════════════════════════════════════════════
+// APPWRITE CONFIGURATION
+// ════════════════════════════════════════════════════
+const client = new Client()
+    .setEndpoint("https://sfo.cloud.appwrite.io/v1")
+    .setProject("69ed959f000f3f45fe41");
+
+const account   = new Account(client);
+const databases = new Databases(client);
+
+const DB_ID    = "69ed9bef000113d0764b";
+const FUEL_COL  = "fuel_records";
+const MILE_COL  = "mileage_records";
+const MAINT_COL = "maintenance_records";
+
+// Global state — exposed to other scripts
+window.currentUser = null;
+window.appwriteAccount = account;
+window.appwriteDB = databases;
+window.appwriteID = ID;
+window.appwriteQuery = Query;
+window.appwritePermission = Permission;
+window.appwriteRole = Role;
+
+// ════════════════════════════════════════════════════
+// UI CONTROLS
+// ════════════════════════════════════════════════════
+const authModal = document.getElementById("authModal");
+const loginForm = document.getElementById("loginForm");
+const loginBtn = document.getElementById("loginBtn");
+const loginEmail = document.getElementById("loginEmail");
+const loginPassword = document.getElementById("loginPassword");
+const authError = document.getElementById("authError");
+const navAccountContainer = document.getElementById("navAccountContainer");
+const navUserEmail = document.getElementById("navUserEmail");
+const navLogoutBtn = document.getElementById("navLogoutBtn");
+const nav = document.querySelector(".nav");
+const main = document.querySelector(".main");
+
+// ════════════════════════════════════════════════════
+// AUTH FUNCTIONS
+// ════════════════════════════════════════════════════
+async function login(email, password) {
+    try {
+        await account.createEmailPasswordSession(email, password);
+        const user = await account.get();
+        window.currentUser = user;
+        return user;
+    } catch (err) {
+        throw err;
+    }
+}
+
+async function logout() {
+    try {
+        await account.deleteSession("current");
+    } catch (err) {
+        console.error("Logout error:", err);
+    }
+    window.currentUser = null;
+}
+
+function showUI(user) {
+    authModal.classList.remove("show");
+    nav.classList.add("authenticated");
+    main.classList.add("authenticated");
+    navUserEmail.textContent = user.email;
+    navAccountContainer.style.display = "flex";
+}
+
+function showAuthModal() {
+    authModal.classList.add("show");
+    nav.classList.remove("authenticated");
+    main.classList.remove("authenticated");
+    navAccountContainer.style.display = "none";
+    loginForm.reset();
+    authError.classList.remove("show");
+    loginBtn.disabled = false;
+    loginBtn.innerHTML = '<i class="fas fa-bolt" style="margin-right:8px;"></i>Access Command Center';
+}
+
+// ════════════════════════════════════════════════════
+// RESTORE SESSION ON PAGE LOAD
+// ════════════════════════════════════════════════════
+(async () => {
+    try {
+        const user = await account.get();
+        window.currentUser = user;
+        showUI(user);
+        // Load all data from Appwrite after auth is confirmed
+        if (window.initAppData) {
+            await window.initAppData();
+            // Subscribe to realtime updates after data is loaded
+            window.subscribeToRealtimeUpdates();
+        }
+    } catch (err) {
+        showAuthModal();
+    }
+})();
+
+// ════════════════════════════════════════════════════
+// LOGIN HANDLER
+// ════════════════════════════════════════════════════
+loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = loginEmail.value.trim();
+    const password = loginPassword.value;
+
+    if (!email || !password) return;
+
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>Authenticating...';
+    authError.classList.remove("show");
+
+    try {
+        const user = await login(email, password);
+        showUI(user);
+        // Load all data from Appwrite after login
+        if (window.initAppData) {
+            await window.initAppData();
+            // Subscribe to realtime updates after login
+            window.subscribeToRealtimeUpdates();
+        }
+    } catch (err) {
+        authError.textContent = err.message || "Authentication failed. Please check your credentials.";
+        authError.classList.add("show");
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<i class="fas fa-bolt" style="margin-right:8px;"></i>Access Command Center';
+    }
+});
+
+// ════════════════════════════════════════════════════
+// LOGOUT HANDLER
+// ════════════════════════════════════════════════════
+navLogoutBtn.addEventListener("click", async () => {
+    // Unsubscribe from realtime updates before logout
+    if (window.realtimeUnsubscribers && Array.isArray(window.realtimeUnsubscribers)) {
+        window.realtimeUnsubscribers.forEach(unsub => unsub());
+        window.realtimeUnsubscribers = [];
+    }
+    await logout();
+    showAuthModal();
+});
+
+// ════════════════════════════════════════════════════
+// APPWRITE DATABASE FUNCTIONS (FUEL)
+// ════════════════════════════════════════════════════
+window.createFuelRecord = async (data) => {
+    if (!window.currentUser) throw new Error("Not authenticated");
+    await databases.createDocument(
+        DB_ID,
+        FUEL_COL,
+        ID.unique(),
+        {
+            ...data,
+            userId: window.currentUser.$id
+        },
+        [
+            Permission.read(Role.user(window.currentUser.$id)),
+            Permission.update(Role.user(window.currentUser.$id)),
+            Permission.delete(Role.user(window.currentUser.$id))
+        ]
+    );
+};
+
+window.loadFuelFromAppwrite = async () => {
+    if (!window.currentUser) return;
+    try {
+        const res = await databases.listDocuments(DB_ID, FUEL_COL, [
+            Query.equal("userId", window.currentUser.$id),
+            Query.orderDesc("date")
+        ]);
+        return res.documents || [];
+    } catch (err) {
+        console.error("Error loading fuel records:", err);
+        return [];
+    }
+};
+
+window.createMileageRecord = async (data) => {
+    if (!window.currentUser) throw new Error("Not authenticated");
+    await databases.createDocument(
+        DB_ID,
+        MILE_COL,
+        ID.unique(),
+        {
+            ...data,
+            userId: window.currentUser.$id
+        },
+        [
+            Permission.read(Role.user(window.currentUser.$id)),
+            Permission.update(Role.user(window.currentUser.$id)),
+            Permission.delete(Role.user(window.currentUser.$id))
+        ]
+    );
+};
+
+window.loadMileageFromAppwrite = async () => {
+    if (!window.currentUser) return;
+    try {
+        const res = await databases.listDocuments(DB_ID, MILE_COL, [
+            Query.equal("userId", window.currentUser.$id),
+            Query.orderDesc("dateTime")
+        ]);
+        return res.documents || [];
+    } catch (err) {
+        console.error("Error loading mileage records:", err);
+        return [];
+    }
+};
+
+window.deleteMileageRecordsForUser = async () => {
+    if (!window.currentUser) throw new Error("Not authenticated");
+    try {
+        const res = await databases.listDocuments(DB_ID, MILE_COL, [
+            Query.equal("userId", window.currentUser.$id)
+        ]);
+        for (const doc of res.documents) {
+            await databases.deleteDocument(DB_ID, MILE_COL, doc.$id);
+        }
+    } catch (err) {
+        console.error("Error deleting mileage records:", err);
+        throw err;
+    }
+};
+
+window.createMaintRecord = async (data) => {
+    if (!window.currentUser) throw new Error("Not authenticated");
+    await databases.createDocument(
+        DB_ID,
+        MAINT_COL,
+        ID.unique(),
+        {
+            ...data,
+            userId: window.currentUser.$id
+        },
+        [
+            Permission.read(Role.user(window.currentUser.$id)),
+            Permission.update(Role.user(window.currentUser.$id)),
+            Permission.delete(Role.user(window.currentUser.$id))
+        ]
+    );
+};
+
+window.loadMaintFromAppwrite = async () => {
+    if (!window.currentUser) return;
+    try {
+        const res = await databases.listDocuments(DB_ID, MAINT_COL, [
+            Query.equal("userId", window.currentUser.$id),
+            Query.orderDesc("date")
+        ]);
+        return res.documents || [];
+    } catch (err) {
+        console.error("Error loading maintenance records:", err);
+        return [];
+    }
+};
+
+window.deleteMaintRecordFromAppwrite = async (docId) => {
+    if (!window.currentUser) throw new Error("Not authenticated");
+    try {
+        await databases.deleteDocument(DB_ID, MAINT_COL, docId);
+    } catch (err) {
+        console.error("Error deleting maintenance record:", err);
+        throw err;
+    }
+};
+
+window.deleteMaintRecordsForUser = async () => {
+    if (!window.currentUser) throw new Error("Not authenticated");
+    try {
+        const res = await databases.listDocuments(DB_ID, MAINT_COL, [
+            Query.equal("userId", window.currentUser.$id)
+        ]);
+        for (const doc of res.documents) {
+            await databases.deleteDocument(DB_ID, MAINT_COL, doc.$id);
+        }
+    } catch (err) {
+        console.error("Error deleting maintenance records:", err);
+        throw err;
+    }
+};
+
+// ════════════════════════════════════════════════════
+// REALTIME SUBSCRIPTIONS
+// ════════════════════════════════════════════════════
+window.subscribeToRealtimeUpdates = () => {
+    if (!window.currentUser) return;
+
+    // Subscribe to fuel records changes
+    const fuelUnsubscribe = client.subscribe(
+        `databases.${DB_ID}.collections.${FUEL_COL}.documents`,
+        async (response) => {
+            console.log("Fuel data changed:", response.events);
+            if (response.events.some(e => e.includes("create") || e.includes("update") || e.includes("delete"))) {
+                await window.loadFuelFromAppwrite().then(docs => {
+                    fuelRecords = docs;
+                    renderFuelTable();
+                    updateVaultCounts();
+                    refreshOverview();
+                });
+            }
+        }
+    );
+
+    // Subscribe to mileage records changes
+    const mileUnsubscribe = client.subscribe(
+        `databases.${DB_ID}.collections.${MILE_COL}.documents`,
+        async (response) => {
+            console.log("Mileage data changed:", response.events);
+            if (response.events.some(e => e.includes("create") || e.includes("update") || e.includes("delete"))) {
+                await window.loadMileageFromAppwrite().then(docs => {
+                    mileageData = docs;
+                    processAndRenderMileage(mileageData);
+                    updateVaultCounts();
+                    refreshOverview();
+                });
+            }
+        }
+    );
+
+    // Subscribe to maintenance records changes
+    const maintUnsubscribe = client.subscribe(
+        `databases.${DB_ID}.collections.${MAINT_COL}.documents`,
+        async (response) => {
+            console.log("Maintenance data changed:", response.events);
+            if (response.events.some(e => e.includes("create") || e.includes("update") || e.includes("delete"))) {
+                await window.loadMaintFromAppwrite().then(docs => {
+                    maintRecords = docs;
+                    renderMaintTable();
+                    updateMaintSummary();
+                    updateVaultCounts();
+                    refreshOverview();
+                });
+            }
+        }
+    );
+
+    // Store unsubscribe functions for cleanup if needed
+    window.realtimeUnsubscribers = [fuelUnsubscribe, mileUnsubscribe, maintUnsubscribe];
+};
+</script>
+</body>
+</html>

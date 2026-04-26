@@ -712,6 +712,112 @@ document.getElementById('jsonImportInput').addEventListener('change', function(e
     reader.readAsText(file);
 });
 
+// Individual Fuel Upload
+document.getElementById('fuelUploadInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(ev) {
+        try {
+            const data = JSON.parse(ev.target.result);
+            let fuelImported = 0;
+
+            if (data.fuel && Array.isArray(data.fuel)) {
+                for (const rec of data.fuel) {
+                    try {
+                        await window.createFuelRecord(rec);
+                        fuelImported++;
+                    } catch (err) {
+                        console.error("Error saving fuel record:", err);
+                    }
+                }
+                await loadFuel();
+                renderFuelTable();
+                toast(`✓ Imported ${fuelImported} fuel records`);
+                updateVaultCounts();
+            } else {
+                toast('No fuel data found in file', 'warn');
+            }
+        } catch(err) {
+            toast('Error: ' + err.message, 'error');
+        }
+        e.target.value = null;
+    };
+    reader.readAsText(file);
+});
+
+// Individual Mileage Upload
+document.getElementById('mileageUploadInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(ev) {
+        try {
+            const data = JSON.parse(ev.target.result);
+            let mileImported = 0;
+
+            const mileageData = data.mileage || (Array.isArray(data) ? data : null);
+            if (mileageData && Array.isArray(mileageData)) {
+                const mileRecords = mileageData.map(r => ({
+                    dateTime: r.dateTime,
+                    currentMileage: r.currentMileage
+                }));
+                for (const rec of mileRecords) {
+                    try {
+                        await window.createMileageRecord(rec);
+                        mileImported++;
+                    } catch (err) {
+                        console.error("Error saving mileage record:", err);
+                    }
+                }
+                await loadMileage();
+                resetMileageFilter();
+                toast(`✓ Imported ${mileImported} mileage records`);
+                updateVaultCounts();
+            } else {
+                toast('No mileage data found in file', 'warn');
+            }
+        } catch(err) {
+            toast('Error: ' + err.message, 'error');
+        }
+        e.target.value = null;
+    };
+    reader.readAsText(file);
+});
+
+// Individual Maintenance Upload
+document.getElementById('maintUploadInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(ev) {
+        try {
+            const data = JSON.parse(ev.target.result);
+            let maintImported = 0;
+
+            if (data.maintenance && Array.isArray(data.maintenance)) {
+                for (const rec of data.maintenance) {
+                    try {
+                        await window.createMaintRecord(rec);
+                        maintImported++;
+                    } catch (err) {
+                        console.error("Error saving maintenance record:", err);
+                    }
+                }
+                await loadMaint();
+                toast(`✓ Imported ${maintImported} maintenance records`);
+                updateVaultCounts();
+            } else {
+                toast('No maintenance data found in file', 'warn');
+            }
+        } catch(err) {
+            toast('Error: ' + err.message, 'error');
+        }
+        e.target.value = null;
+    };
+    reader.readAsText(file);
+});
+
 async function purgeAllData() {
     if (confirm('⚠️ FULL SYSTEM PURGE\n\nDelete ALL fuel and mileage data?\nThis cannot be undone.')) {
         try {

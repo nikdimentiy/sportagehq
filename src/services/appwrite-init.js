@@ -24,6 +24,12 @@ window.appwriteQuery = Query;
 window.appwritePermission = Permission;
 window.appwriteRole = Role;
 
+// Database and collection IDs — exposed for legacy app.js
+window.DB_ID = DB_ID;
+window.FUEL_COL = FUEL_COL;
+window.MILE_COL = MILE_COL;
+window.MAINT_COL = MAINT_COL;
+
 // ════════════════════════════════════════════════════
 // UI CONTROLS
 // ════════════════════════════════════════════════════

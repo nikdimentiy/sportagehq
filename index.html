@@ -1093,12 +1093,75 @@
             <div class="panel">
                 <div class="panel-header"><i class="fas fa-download"></i> Export Individual Records</div>
                 <div class="panel-body">
-                    <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:14px;">
+                    <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:16px;">
                         Download your records by type as separate JSON files.
                     </p>
-                    <button class="btn-primary" onclick="exportFuelJSON()" style="margin-bottom:8px;"><i class="fas fa-gas-pump"></i> Export Fuel Records</button>
-                    <button class="btn-primary" onclick="exportMileageJSON()" style="margin-bottom:8px;"><i class="fas fa-road"></i> Export Mileage Records</button>
-                    <button class="btn-primary" onclick="exportMaintJSON()"><i class="fas fa-wrench"></i> Export Maintenance Records</button>
+
+                    <!-- VARIANT: Card-Style Buttons with Icon & Short Text -->
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                        <!-- Fuel Export -->
+                        <button onclick="exportFuelJSON()" style="
+                            background:linear-gradient(135deg, rgba(0,229,255,0.12), rgba(0,229,255,0.05));
+                            border:1.5px solid rgba(0,229,255,0.3);
+                            border-radius:10px;
+                            padding:16px 12px;
+                            color:var(--cyan);
+                            cursor:pointer;
+                            display:flex;
+                            flex-direction:column;
+                            align-items:center;
+                            gap:8px;
+                            transition:all 0.3s ease;
+                            font-family:var(--font-body);
+                            font-weight:600;
+                            font-size:0.8rem;
+                        " onmouseover="this.style.borderColor='rgba(0,229,255,0.6)';this.style.background='linear-gradient(135deg, rgba(0,229,255,0.2), rgba(0,229,255,0.1))';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(0,229,255,0.3)';this.style.background='linear-gradient(135deg, rgba(0,229,255,0.12), rgba(0,229,255,0.05))';this.style.transform='translateY(0)'">
+                            <i class="fas fa-gas-pump" style="font-size:1.4rem;"></i>
+                            <span>Export Fuel</span>
+                        </button>
+
+                        <!-- Mileage Export -->
+                        <button onclick="exportMileageJSON()" style="
+                            background:linear-gradient(135deg, rgba(0,224,150,0.12), rgba(0,224,150,0.05));
+                            border:1.5px solid rgba(0,224,150,0.3);
+                            border-radius:10px;
+                            padding:16px 12px;
+                            color:var(--emerald);
+                            cursor:pointer;
+                            display:flex;
+                            flex-direction:column;
+                            align-items:center;
+                            gap:8px;
+                            transition:all 0.3s ease;
+                            font-family:var(--font-body);
+                            font-weight:600;
+                            font-size:0.8rem;
+                        " onmouseover="this.style.borderColor='rgba(0,224,150,0.6)';this.style.background='linear-gradient(135deg, rgba(0,224,150,0.2), rgba(0,224,150,0.1))';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(0,224,150,0.3)';this.style.background='linear-gradient(135deg, rgba(0,224,150,0.12), rgba(0,224,150,0.05))';this.style.transform='translateY(0)'">
+                            <i class="fas fa-road" style="font-size:1.4rem;"></i>
+                            <span>Export Mileage</span>
+                        </button>
+
+                        <!-- Maintenance Export -->
+                        <button onclick="exportMaintJSON()" style="
+                            background:linear-gradient(135deg, rgba(255,61,113,0.12), rgba(255,61,113,0.05));
+                            border:1.5px solid rgba(255,61,113,0.3);
+                            border-radius:10px;
+                            padding:16px 12px;
+                            color:var(--rose);
+                            cursor:pointer;
+                            display:flex;
+                            flex-direction:column;
+                            align-items:center;
+                            gap:8px;
+                            transition:all 0.3s ease;
+                            font-family:var(--font-body);
+                            font-weight:600;
+                            font-size:0.8rem;
+                        " onmouseover="this.style.borderColor='rgba(255,61,113,0.6)';this.style.background='linear-gradient(135deg, rgba(255,61,113,0.2), rgba(255,61,113,0.1))';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,61,113,0.3)';this.style.background='linear-gradient(135deg, rgba(255,61,113,0.12), rgba(255,61,113,0.05))';this.style.transform='translateY(0)'">
+                            <i class="fas fa-wrench" style="font-size:1.4rem;"></i>
+                            <span>Export Maint</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

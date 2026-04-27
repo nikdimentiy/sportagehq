@@ -30,9 +30,6 @@ export function refreshOverview() {
     const totalFuelMi = state.fuelRecords.reduce((s,r)=>s+(r.milesDriven||0),0);
     el('ovCostPerMile').textContent = totalFuelMi > 0 ? '$' + (totalSpend/totalFuelMi).toFixed(3) : '--';
 
-    const tripped = state.fuelRecords.filter(r => r.milesDriven > 0);
-    el('ovAvgTrip').textContent = tripped.length ? (tripped.reduce((s,r)=>s+r.milesDriven,0)/tripped.length).toFixed(1)+' mi' : '--';
-
     const fdc = {};
     state.fuelRecords.forEach(r => { try{ const d = new Date(r.date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short'}); fdc[d]=(fdc[d]||0)+1; }catch(e){} });
     let pfd='--', pfm=0; for(const d in fdc){if(fdc[d]>pfm){pfm=fdc[d];pfd=d;}} el('ovPeakFuelDay').textContent = pfd;
@@ -58,11 +55,6 @@ export function refreshOverview() {
         el('ovWeeklyMiAvg').textContent = '--';
         el('ovLongestTrip').textContent = '--';
     }
-
-    const allDates = new Set();
-    state.fuelRecords.forEach(r => { if(r.date) allDates.add(r.date); });
-    state.mileageData.forEach(r => { if(r.dateTime) allDates.add(r.dateTime.split(' ')[0]); });
-    el('ovDaysTracked').textContent = allDates.size;
 
     renderOverviewCharts();
 }

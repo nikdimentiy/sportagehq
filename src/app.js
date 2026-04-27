@@ -25,15 +25,29 @@ import {
 } from './features/system.js';
 
 // ── TABS ──
+function switchTab(tabName) {
+    document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+    const navBtn = document.querySelector(`.nav-tabs button[data-tab="${tabName}"]`);
+    const bottomBtn = document.querySelector(`.bottom-nav-item[data-tab="${tabName}"]`);
+    if (navBtn) navBtn.classList.add('active');
+    if (bottomBtn) bottomBtn.classList.add('active');
+    document.getElementById('page-' + tabName)?.classList.add('active');
+    if (tabName === 'overview') refreshOverview();
+    if (tabName === 'system') updateSystemCounts();
+}
+
 document.getElementById('navTabs').addEventListener('click', e => {
     const btn = e.target.closest('button');
     if (!btn) return;
-    document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('page-' + btn.dataset.tab).classList.add('active');
-    if (btn.dataset.tab === 'overview') refreshOverview();
-    if (btn.dataset.tab === 'system') updateSystemCounts();
+    switchTab(btn.dataset.tab);
+});
+
+document.getElementById('bottomNav').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    switchTab(btn.dataset.tab);
 });
 
 // ── INIT ──
@@ -57,7 +71,7 @@ document.addEventListener('keydown', e => {
         const tab = tabMap[e.key];
         if (tab) {
             e.preventDefault();
-            document.querySelector(`.nav-tabs button[data-tab="${tab}"]`)?.click();
+            switchTab(tab);
         }
         return;
     }
@@ -66,16 +80,16 @@ document.addEventListener('keydown', e => {
 
     if (e.key === 'm' || e.key === 'M') {
         e.preventDefault();
-        const btn = document.querySelector('.nav-tabs button[data-tab="mileage"]');
-        if (btn && !btn.classList.contains('active')) btn.click();
+        const active = document.querySelector('.nav-tabs button[data-tab="mileage"]');
+        if (!active?.classList.contains('active')) switchTab('mileage');
         if (document.getElementById('mileageCockpit').classList.contains('input-hidden')) toggleMileageInput();
         setTimeout(() => document.getElementById('mileOdo').focus(), 50);
     }
 
     if (e.key === 'g' || e.key === 'G') {
         e.preventDefault();
-        const btn = document.querySelector('.nav-tabs button[data-tab="fuel"]');
-        if (btn && !btn.classList.contains('active')) btn.click();
+        const active = document.querySelector('.nav-tabs button[data-tab="fuel"]');
+        if (!active?.classList.contains('active')) switchTab('fuel');
         if (document.getElementById('fuelCockpit').classList.contains('input-hidden')) toggleFuelInput();
         setTimeout(() => document.getElementById('fuelStation').focus(), 50);
     }

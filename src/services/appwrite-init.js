@@ -45,6 +45,7 @@ const navUserEmail = document.getElementById("navUserEmail");
 const navLogoutBtn = document.getElementById("navLogoutBtn");
 const nav = document.querySelector(".nav");
 const main = document.querySelector(".main");
+const bottomNav = document.getElementById("bottomNav");
 
 // ════════════════════════════════════════════════════
 // AUTH FUNCTIONS
@@ -73,6 +74,7 @@ function showUI(user) {
     authModal.classList.remove("show");
     nav.classList.add("authenticated");
     main.classList.add("authenticated");
+    bottomNav.classList.add("authenticated");
     navUserEmail.textContent = user.email;
     navAccountContainer.style.display = "flex";
 }
@@ -81,6 +83,7 @@ function showAuthModal() {
     authModal.classList.add("show");
     nav.classList.remove("authenticated");
     main.classList.remove("authenticated");
+    bottomNav.classList.remove("authenticated");
     navAccountContainer.style.display = "none";
     loginForm.reset();
     authError.classList.remove("show");

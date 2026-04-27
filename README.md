@@ -20,9 +20,6 @@ Log odometer entries with timestamp support and analyze driving behavior through
 ### 🔧 Maintenance
 Store service records including date, service type, notes, shop, odometer, cost, next due date, and next due mileage. The maintenance section also summarizes total services, total spent, last service date, and last recorded odometer value.
 
-### 🗂️ Data Vault
-Export full backups as JSON, restore previous backups, and manage fuel-only, mileage-only, or maintenance-only data packages. The interface presents record counts and uses a real-time cloud database as the storage layer.
-
 ## 🚀 Features
 
 - Login-protected command center with account-aware navigation  

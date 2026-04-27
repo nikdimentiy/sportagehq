@@ -171,4 +171,15 @@ export function toggleMaintInput() {
     const hidden = col.style.display === 'none';
     col.style.display = hidden ? '' : 'none';
     lbl.textContent = hidden ? 'Hide Input' : 'Show Input';
+    localStorage.setItem('sportagehq_maint_input_hidden', hidden ? '0' : '1');
+}
+
+export function restoreMaintInputState() {
+    if (localStorage.getItem('sportagehq_maint_input_hidden') === '1') {
+        const col = document.querySelector('#page-maintenance .panel-col-input');
+        const lbl = document.getElementById('maintToggleLabel');
+        if (!col) return;
+        col.style.display = 'none';
+        lbl.textContent = 'Show Input';
+    }
 }

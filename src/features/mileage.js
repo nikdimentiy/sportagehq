@@ -217,4 +217,12 @@ export async function purgeMileageData() {
 export function toggleMileageInput() {
     const hidden = document.getElementById('mileageCockpit').classList.toggle('input-hidden');
     document.getElementById('mileageToggleLabel').textContent = hidden ? 'Show Input' : 'Hide Input';
+    localStorage.setItem('sportagehq_mileage_input_hidden', hidden ? '1' : '0');
+}
+
+export function restoreMileageInputState() {
+    if (localStorage.getItem('sportagehq_mileage_input_hidden') === '1') {
+        document.getElementById('mileageCockpit').classList.add('input-hidden');
+        document.getElementById('mileageToggleLabel').textContent = 'Show Input';
+    }
 }

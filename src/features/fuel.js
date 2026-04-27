@@ -185,4 +185,12 @@ export async function resetFuelData() {
 export function toggleFuelInput() {
     const hidden = document.getElementById('fuelCockpit').classList.toggle('input-hidden');
     document.getElementById('fuelToggleLabel').textContent = hidden ? 'Show Input' : 'Hide Input';
+    localStorage.setItem('sportagehq_fuel_input_hidden', hidden ? '1' : '0');
+}
+
+export function restoreFuelInputState() {
+    if (localStorage.getItem('sportagehq_fuel_input_hidden') === '1') {
+        document.getElementById('fuelCockpit').classList.add('input-hidden');
+        document.getElementById('fuelToggleLabel').textContent = 'Show Input';
+    }
 }

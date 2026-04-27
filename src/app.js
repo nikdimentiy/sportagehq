@@ -7,22 +7,27 @@ import { state } from './state.js';
 import { refreshOverview } from './features/overview.js';
 import {
     loadFuel, renderFuelTable, editFuelRow, saveFuelRow,
-    fuelMonthlyReport, resetFuelData, toggleFuelInput
+    fuelMonthlyReport, resetFuelData, toggleFuelInput, restoreFuelInputState
 } from './features/fuel.js';
 import {
     loadMileage, processAndRenderMileage, cancelMileageEdit,
     editMileageRow, saveMileageRow, addMileageRecord,
     applyMileageFilter, mileFilterLastWeek, mileFilterLastMonth,
-    mileFilterLastQuarter, resetMileageFilter, purgeMileageData, toggleMileageInput
+    mileFilterLastQuarter, resetMileageFilter, purgeMileageData, toggleMileageInput, restoreMileageInputState
 } from './features/mileage.js';
 import {
     loadMaint, renderMaintTable, editMaintRow, saveMaintRow,
     addMaintRecord, deleteMaintRecord, purgeMaintData,
-    updateMaintSummary, toggleMaintInput
+    updateMaintSummary, toggleMaintInput, restoreMaintInputState
 } from './features/maintenance.js';
 import {
     exportMaintJSON, exportFullBackup, updateVaultCounts, updateSystemCounts, wipeAllData
 } from './features/system.js';
+
+// ── RESTORE TOGGLE STATES ──
+restoreFuelInputState();
+restoreMileageInputState();
+restoreMaintInputState();
 
 // ── TABS ──
 function switchTab(tabName) {

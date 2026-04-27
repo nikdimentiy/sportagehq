@@ -981,8 +981,17 @@
                 <div class="panel-body">
                     <div class="btn-row">
                         <button class="btn-sm" onclick="fuelMonthlyReport()"><i class="fas fa-calendar-alt"></i> Monthly Report</button>
-                        <button class="btn-sm" onclick="fuelPeakDay()"><i class="fas fa-clock"></i> Peak Activity</button>
                         <button class="btn-sm danger" onclick="resetFuelData()"><i class="fas fa-trash"></i> Reset</button>
+                    </div>
+                    <div class="chip-grid" style="grid-template-columns:1fr 1fr;margin-bottom:10px">
+                        <div class="chip">
+                            <div class="chip-label">Min $/Mile</div>
+                            <div class="chip-val" id="fuelCpmMin">--</div>
+                        </div>
+                        <div class="chip">
+                            <div class="chip-label">Max $/Mile</div>
+                            <div class="chip-val" id="fuelCpmMax">--</div>
+                        </div>
                     </div>
                     <div id="fuelReport" class="notif"></div>
                     <div class="table-wrap">

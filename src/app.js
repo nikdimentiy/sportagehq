@@ -150,6 +150,16 @@ function renderFuelTable() {
         `;
         tb.appendChild(tr);
     });
+
+    const cpmRecs = fuelRecords.filter(r => r.costPerMile > 0);
+    if (cpmRecs.length) {
+        const vals = cpmRecs.map(r => r.costPerMile);
+        document.getElementById('fuelCpmMin').textContent = '$' + Math.min(...vals).toFixed(3);
+        document.getElementById('fuelCpmMax').textContent = '$' + Math.max(...vals).toFixed(3);
+    } else {
+        document.getElementById('fuelCpmMin').textContent = '--';
+        document.getElementById('fuelCpmMax').textContent = '--';
+    }
 }
 
 function editFuelRow(docId) {
@@ -212,30 +222,20 @@ async function saveFuelRow(docId) {
 
 function fuelMonthlyReport() {
     const area = document.getElementById('fuelReport');
-    if (!fuelRecords.length) { area.innerHTML='No data.'; area.style.display='block'; return; }
+    if (area.style.display === 'block') { area.style.display = 'none'; return; }
+    if (!fuelRecords.length) { area.innerHTML = 'No data.'; area.style.display = 'block'; return; }
     const mt = {};
-    fuelRecords.forEach(r => { if(r.date && r.totalCost) { const my = r.date.substring(0,7); mt[my] = (mt[my]||0) + r.totalCost; } });
-    let html = '<div style="margin-bottom:10px;font-weight:700;font-family:var(--font-display);color:var(--cyan);">MONTHLY EXPENDITURE</div>';
+    fuelRecords.forEach(r => { if (r.date && r.totalCost) { const my = r.date.substring(0, 7); mt[my] = (mt[my] || 0) + r.totalCost; } });
+    if (!Object.keys(mt).length) { area.innerHTML = 'No monthly data available.'; area.style.display = 'block'; return; }
+    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-weight:700;font-family:var(--font-display);color:var(--cyan);">MONTHLY EXPENDITURE</div><button class="btn-sm" style="padding:2px 8px;font-size:0.7rem" onclick="document.getElementById('fuelReport').style.display='none'">&#x2715;</button></div>`;
     Object.keys(mt).sort().reverse().forEach(my => {
-        const [y,m] = my.split('-');
-        const mn = new Date(parseInt(y), parseInt(m)-1).toLocaleString('default',{month:'long'});
+        const [y, m] = my.split('-');
+        const mn = new Date(parseInt(y), parseInt(m) - 1).toLocaleString('default', { month: 'long' });
         html += `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)"><span>${mn} ${y}</span><span style="font-weight:600">$${mt[my].toFixed(2)}</span></div>`;
     });
     area.innerHTML = html; area.style.display = 'block';
 }
 
-function fuelPeakDay() {
-    const area = document.getElementById('fuelReport');
-    if (!fuelRecords.length) { area.innerHTML='No data.'; area.style.display='block'; return; }
-    const dc = {};
-    fuelRecords.forEach(r => {
-        try { const d = new Date(r.date+'T00:00:00'); const day = d.toLocaleDateString('en-US',{weekday:'long'}); dc[day] = (dc[day]||0)+1; } catch(e){}
-    });
-    let max=0, peak='N/A';
-    for (const d in dc) { if(dc[d]>max){max=dc[d];peak=d;} }
-    area.innerHTML = `<span style="color:var(--cyan);font-family:var(--font-display);font-weight:700;">PEAK ACTIVITY:</span> <strong style="color:white;text-transform:uppercase;">${peak}</strong> (${max} stops)`;
-    area.style.display = 'block';
-}
 
 async function resetFuelData() {
     if (!fuelRecords.length) return;

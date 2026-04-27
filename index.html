@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sportage HQ | Command Center</title>
+    <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="/favicon/site.webmanifest">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -1272,11 +1277,32 @@
                         <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
                     </div>
                 </div>
-                <div class="panel" style="opacity:0.42; pointer-events:none;">
-                    <div class="panel-header"><i class="fas fa-cloud-upload-alt"></i> Data Backup</div>
-                    <div class="panel-body" style="text-align:center; padding:24px 12px; color:var(--text-3);">
-                        <i class="fas fa-hammer" style="font-size:1.4rem; margin-bottom:10px; display:block;"></i>
-                        <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
+                <div class="panel">
+                    <div class="panel-header" style="background:rgba(0,229,255,0.05); border-bottom-color:rgba(0,229,255,0.18);">
+                        <i class="fas fa-database" style="color:var(--cyan)!important"></i>
+                        <span style="color:var(--cyan)">Data Backup</span>
+                    </div>
+                    <div class="panel-body">
+                        <p style="font-size:0.84rem; color:var(--text-2); margin-bottom:16px; line-height:1.65;">
+                            Export a full composite snapshot of all your data as a single <strong style="color:var(--text-1)">.json</strong> file — fuel records, mileage logs, and maintenance history.
+                        </p>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:20px;">
+                            <div class="chip">
+                                <div class="chip-label">Fuel Logs</div>
+                                <div class="chip-val" id="backupFuelCount">—</div>
+                            </div>
+                            <div class="chip">
+                                <div class="chip-label">Mileage Logs</div>
+                                <div class="chip-val" id="backupMileCount">—</div>
+                            </div>
+                            <div class="chip">
+                                <div class="chip-label">Service Logs</div>
+                                <div class="chip-val" id="backupMaintCount">—</div>
+                            </div>
+                        </div>
+                        <button class="btn-sm" onclick="exportFullBackup()" style="width:100%; justify-content:center; padding:10px 14px; font-size:0.8rem;">
+                            <i class="fas fa-download"></i>&nbsp; Download Full Backup
+                        </button>
                     </div>
                 </div>
                 <div class="panel" style="opacity:0.42; pointer-events:none;">

@@ -602,6 +602,27 @@ footer {
     font-family: 'Inter', sans-serif;
 }
 
+#fuelCpmMin {
+    background: linear-gradient(135deg, #00e096, #56ffb2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+#fuelCpmAvg {
+    background: linear-gradient(135deg, #00e5ff, #68f3ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+#fuelCpmMax {
+    background: linear-gradient(135deg, #ff3d71, #ff8fa0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
 #page-fuel .sec-label,
 #page-mileage .sec-label {
     font-family: 'Inter', sans-serif;

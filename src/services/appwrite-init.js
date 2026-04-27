@@ -1,4 +1,5 @@
 import { Client, Account, Databases, ID, Query, Permission, Role } from "https://esm.sh/appwrite@16.0.2";
+import { state } from '../state.js';
 
 // ════════════════════════════════════════════════════
 // APPWRITE CONFIGURATION
@@ -388,10 +389,10 @@ window.subscribeToRealtimeUpdates = () => {
             console.log("Fuel data changed:", response.events);
             if (response.events.some(e => e.includes("create") || e.includes("update") || e.includes("delete"))) {
                 await window.loadFuelFromAppwrite().then(docs => {
-                    fuelRecords = docs;
-                    renderFuelTable();
-                    updateVaultCounts();
-                    refreshOverview();
+                    state.fuelRecords = docs;
+                    window.renderFuelTable();
+                    window.updateVaultCounts();
+                    window.refreshOverview();
                 });
             }
         }
@@ -404,10 +405,10 @@ window.subscribeToRealtimeUpdates = () => {
             console.log("Mileage data changed:", response.events);
             if (response.events.some(e => e.includes("create") || e.includes("update") || e.includes("delete"))) {
                 await window.loadMileageFromAppwrite().then(docs => {
-                    mileageData = docs;
-                    processAndRenderMileage(mileageData);
-                    updateVaultCounts();
-                    refreshOverview();
+                    state.mileageData = docs;
+                    window.processAndRenderMileage(state.mileageData);
+                    window.updateVaultCounts();
+                    window.refreshOverview();
                 });
             }
         }
@@ -420,11 +421,11 @@ window.subscribeToRealtimeUpdates = () => {
             console.log("Maintenance data changed:", response.events);
             if (response.events.some(e => e.includes("create") || e.includes("update") || e.includes("delete"))) {
                 await window.loadMaintFromAppwrite().then(docs => {
-                    maintRecords = docs;
-                    renderMaintTable();
-                    updateMaintSummary();
-                    updateVaultCounts();
-                    refreshOverview();
+                    state.maintRecords = docs;
+                    window.renderMaintTable();
+                    window.updateMaintSummary();
+                    window.updateVaultCounts();
+                    window.refreshOverview();
                 });
             }
         }

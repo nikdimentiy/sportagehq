@@ -1308,9 +1308,6 @@
 
             <div class="panel">
                 <div class="panel-header"><i class="fas fa-list-alt"></i> Service History
-                    <button class="panel-toggle" onclick="toggleMaintInput()" id="maintToggleBtn">
-                        <i class="fas fa-columns"></i> <span id="maintToggleLabel">Hide Input</span>
-                    </button>
                 </div>
                 <div class="panel-body">
                     <div class="btn-row">
@@ -1381,11 +1378,15 @@
         <div>
             <div class="sec-label" style="margin-top:0">Future Modules</div>
             <div class="sys-modules-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px;">
-                <div class="panel" style="opacity:0.42; pointer-events:none;">
-                    <div class="panel-header"><i class="fas fa-bell"></i> Smart Alerts</div>
-                    <div class="panel-body" style="text-align:center; padding:24px 12px; color:var(--text-3);">
-                        <i class="fas fa-hammer" style="font-size:1.4rem; margin-bottom:10px; display:block;"></i>
-                        <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
+                <div class="panel" style="border-color:rgba(255,180,0,0.2);">
+                    <div class="panel-header" style="background:rgba(255,180,0,0.05); border-bottom-color:rgba(255,180,0,0.15);">
+                        <i class="fas fa-bell" style="color:var(--amber)!important"></i>
+                        <span style="color:var(--amber)">Smart Alerts</span>
+                    </div>
+                    <div class="panel-body" id="smartAlertsBody" style="padding:14px;">
+                        <div style="text-align:center; padding:18px 12px; color:var(--text-3);">
+                            <i class="fas fa-spinner fa-spin" style="font-size:1rem;"></i>
+                        </div>
                     </div>
                 </div>
                 <div class="panel">

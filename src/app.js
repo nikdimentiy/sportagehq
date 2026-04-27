@@ -18,16 +18,15 @@ import {
 import {
     loadMaint, renderMaintTable, editMaintRow, saveMaintRow,
     addMaintRecord, deleteMaintRecord, purgeMaintData,
-    updateMaintSummary, toggleMaintInput, restoreMaintInputState
+    updateMaintSummary
 } from './features/maintenance.js';
 import {
-    exportMaintJSON, exportFullBackup, updateVaultCounts, updateSystemCounts, wipeAllData
+    exportMaintJSON, exportFullBackup, updateVaultCounts, updateSystemCounts, wipeAllData, updateSmartAlerts
 } from './features/system.js';
 
 // ── RESTORE TOGGLE STATES ──
 restoreFuelInputState();
 restoreMileageInputState();
-restoreMaintInputState();
 
 // ── TABS ──
 function switchTab(tabName) {
@@ -40,7 +39,7 @@ function switchTab(tabName) {
     if (bottomBtn) bottomBtn.classList.add('active');
     document.getElementById('page-' + tabName)?.classList.add('active');
     if (tabName === 'overview') refreshOverview();
-    if (tabName === 'system') updateSystemCounts();
+    if (tabName === 'system') { updateSystemCounts(); updateSmartAlerts(); }
 }
 
 document.getElementById('navTabs').addEventListener('click', e => {
@@ -63,6 +62,7 @@ async function initAppData() {
         await loadMaint();
         updateVaultCounts();
         updateSystemCounts();
+        updateSmartAlerts();
         refreshOverview();
     } catch (err) {
         console.error("Error initializing app data:", err);
@@ -131,6 +131,6 @@ window.toggleMileageInput   = toggleMileageInput;
 window.addMaintRecord       = addMaintRecord;
 window.deleteMaintRecord    = deleteMaintRecord;
 window.purgeMaintData       = purgeMaintData;
-window.toggleMaintInput     = toggleMaintInput;
 window.wipeAllData          = wipeAllData;
 window.updateSystemCounts   = updateSystemCounts;
+window.updateSmartAlerts    = updateSmartAlerts;

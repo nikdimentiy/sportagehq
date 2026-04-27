@@ -70,6 +70,98 @@ export async function purgeAllData() {
     }
 }
 
+function calcWMADailyRate(mileageData, windowDays) {
+    if (mileageData.length < 2) return 0;
+    const sorted = [...mileageData].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - windowDays);
+    cutoff.setHours(0, 0, 0, 0);
+
+    // Sum miles per calendar day from consecutive odometer diffs
+    const dailyMiles = {};
+    for (let i = 1; i < sorted.length; i++) {
+        const diff = Math.max(0, sorted[i].currentMileage - sorted[i - 1].currentMileage);
+        const d = new Date(sorted[i].dateTime);
+        if (d < cutoff) continue;
+        const key = d.toISOString().slice(0, 10);
+        dailyMiles[key] = (dailyMiles[key] || 0) + diff;
+    }
+
+    // Build per-calendar-day array (0 for days with no driving)
+    const days = [];
+    const cur = new Date(cutoff);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    while (cur <= today) {
+        days.push(dailyMiles[cur.toISOString().slice(0, 10)] || 0);
+        cur.setDate(cur.getDate() + 1);
+    }
+    if (!days.length) return 0;
+
+    // WMA: weight = index+1 (oldest=1, newest=n)
+    let wSum = 0, wMiles = 0;
+    days.forEach((m, i) => { const w = i + 1; wMiles += w * m; wSum += w; });
+    return wSum > 0 ? wMiles / wSum : 0;
+}
+
+export function updateSmartAlerts() {
+    const el = document.getElementById('smartAlertsBody');
+    if (!el) return;
+
+    const data = state.mileageData;
+    const INTERVAL = 8000;
+
+    if (!data || data.length < 2) {
+        el.innerHTML = `<div style="text-align:center;padding:18px 12px;color:var(--text-3);">
+            <i class="fas fa-database" style="font-size:1.2rem;margin-bottom:8px;display:block;opacity:0.5;"></i>
+            <span style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;">Need more mileage data</span>
+        </div>`;
+        return;
+    }
+
+    const sorted = [...data].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+    const currentOdo = sorted[sorted.length - 1].currentMileage;
+
+    const nextMilestone = Math.ceil((currentOdo + 1) / INTERVAL) * INTERVAL;
+    const milesRemaining = nextMilestone - currentOdo;
+
+    // Try 60-day WMA first, fall back to 30-day
+    let rate = calcWMADailyRate(data, 60);
+    let windowUsed = 60;
+    if (rate < 0.1) { rate = calcWMADailyRate(data, 30); windowUsed = 30; }
+
+    if (rate < 0.1) {
+        el.innerHTML = `<div style="text-align:center;padding:18px 12px;color:var(--text-3);">
+            <i class="fas fa-exclamation-triangle" style="font-size:1.2rem;margin-bottom:8px;display:block;"></i>
+            <span style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;">Insufficient recent data</span>
+        </div>`;
+        return;
+    }
+
+    const daysUntil = Math.round(milesRemaining / rate);
+    const predicted = new Date();
+    predicted.setDate(predicted.getDate() + daysUntil);
+    const dateStr = predicted.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    let urgColor = 'var(--emerald)', urgLabel = 'On Track';
+    if (daysUntil < 14) { urgColor = 'var(--rose)'; urgLabel = 'Soon!'; }
+    else if (daysUntil < 30) { urgColor = 'var(--amber)'; urgLabel = 'Upcoming'; }
+
+    el.innerHTML = `
+        <div style="margin-bottom:12px;">
+            <div style="font-size:0.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-3);margin-bottom:4px;">Next Maintenance at ${nextMilestone.toLocaleString()} mi</div>
+            <div style="font-size:1.35rem;font-weight:700;color:${urgColor};font-family:'JetBrains Mono',monospace;line-height:1.2;">${dateStr}</div>
+            <div style="font-size:0.72rem;color:var(--text-2);margin-top:3px;">in ~${daysUntil} days &nbsp;<span style="color:${urgColor};font-weight:600;">${urgLabel}</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <div class="chip"><div class="chip-label">Miles Left</div><div class="chip-val">${milesRemaining.toLocaleString()} mi</div></div>
+            <div class="chip"><div class="chip-label">Current Odo</div><div class="chip-val">${currentOdo.toLocaleString()} mi</div></div>
+            <div class="chip"><div class="chip-label">WMA Rate</div><div class="chip-val">${rate.toFixed(1)} mi/day</div></div>
+            <div class="chip"><div class="chip-label">Window</div><div class="chip-val">Last ${windowUsed}d</div></div>
+        </div>`;
+}
+
 export function updateVaultCounts() {
     const fuelEl = document.getElementById('vaultFuelCount');
     const mileEl = document.getElementById('vaultMileCount');

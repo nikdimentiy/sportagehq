@@ -452,6 +452,8 @@
             .chip-grid, .gauge-grid.g6 { grid-template-columns:repeat(3,1fr); }
             .chart-grid { grid-template-columns:1fr; }
             .summary-grid { grid-template-columns:1fr; }
+            #page-system .sys-layout { grid-template-columns:1fr !important; }
+            #page-system .sys-modules-grid { grid-template-columns:repeat(2,1fr) !important; }
         }
 
         @media(max-width:600px) {
@@ -831,6 +833,7 @@
         <button data-tab="fuel"><i class="fas fa-gas-pump"></i>&nbsp; FuelOS</button>
         <button data-tab="mileage"><i class="fas fa-road"></i>&nbsp; MileageOS</button>
         <button data-tab="maintenance"><i class="fas fa-wrench"></i>&nbsp; Maintenance</button>
+        <button data-tab="system"><i class="fas fa-cog"></i>&nbsp; System</button>
     </div>
     <div id="navAccountContainer" class="nav-account" style="display:none;">
         <span class="nav-account-email" id="navUserEmail"></span>
@@ -1208,6 +1211,96 @@
                             </tr></thead>
                             <tbody id="maintTableBody"></tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- TAB: SYSTEM                                 -->
+<!-- ════════════════════════════════════════════ -->
+<div id="page-system" class="tab-page">
+
+    <div class="sec-label">System — Administration &amp; Future Modules</div>
+
+    <div class="sys-layout" style="display:grid; grid-template-columns:320px 1fr; gap:18px; align-items:start; margin-bottom:28px;">
+
+        <!-- LEFT: Wipe Widget -->
+        <div class="panel">
+            <div class="panel-header" style="background:rgba(255,61,113,0.05); border-bottom-color:rgba(255,61,113,0.18);">
+                <i class="fas fa-radiation-alt" style="color:var(--rose)!important"></i>
+                <span style="color:var(--rose)">Nuclear Option</span>
+            </div>
+            <div class="panel-body">
+                <p style="font-size:0.84rem; color:var(--text-2); margin-bottom:18px; line-height:1.65;">
+                    Permanently delete <strong style="color:var(--rose)">all data</strong> from both local cache and Appwrite cloud — fuel records, mileage logs, and maintenance history.
+                </p>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:20px;">
+                    <div class="chip">
+                        <div class="chip-label">Fuel Logs</div>
+                        <div class="chip-val" id="sysWipeFuelCount">—</div>
+                    </div>
+                    <div class="chip">
+                        <div class="chip-label">Mileage Logs</div>
+                        <div class="chip-val" id="sysWipeMileCount">—</div>
+                    </div>
+                    <div class="chip">
+                        <div class="chip-label">Service Logs</div>
+                        <div class="chip-val" id="sysWipeMaintCount">—</div>
+                    </div>
+                </div>
+                <button id="systemWipeBtn" class="btn-sm danger" onclick="wipeAllData()" style="width:100%; justify-content:center; padding:10px 14px; font-size:0.8rem;">
+                    <i class="fas fa-skull-crossbones"></i>&nbsp; Wipe All Data
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT: Future Modules -->
+        <div>
+            <div class="sec-label" style="margin-top:0">Future Modules</div>
+            <div class="sys-modules-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px;">
+                <div class="panel" style="opacity:0.42; pointer-events:none;">
+                    <div class="panel-header"><i class="fas fa-bell"></i> Smart Alerts</div>
+                    <div class="panel-body" style="text-align:center; padding:24px 12px; color:var(--text-3);">
+                        <i class="fas fa-hammer" style="font-size:1.4rem; margin-bottom:10px; display:block;"></i>
+                        <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
+                    </div>
+                </div>
+                <div class="panel" style="opacity:0.42; pointer-events:none;">
+                    <div class="panel-header"><i class="fas fa-cloud-upload-alt"></i> Data Backup</div>
+                    <div class="panel-body" style="text-align:center; padding:24px 12px; color:var(--text-3);">
+                        <i class="fas fa-hammer" style="font-size:1.4rem; margin-bottom:10px; display:block;"></i>
+                        <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
+                    </div>
+                </div>
+                <div class="panel" style="opacity:0.42; pointer-events:none;">
+                    <div class="panel-header"><i class="fas fa-car"></i> Vehicle Profiles</div>
+                    <div class="panel-body" style="text-align:center; padding:24px 12px; color:var(--text-3);">
+                        <i class="fas fa-hammer" style="font-size:1.4rem; margin-bottom:10px; display:block;"></i>
+                        <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
+                    </div>
+                </div>
+                <div class="panel" style="opacity:0.42; pointer-events:none;">
+                    <div class="panel-header"><i class="fas fa-chart-pie"></i> Cost Analytics</div>
+                    <div class="panel-body" style="text-align:center; padding:24px 12px; color:var(--text-3);">
+                        <i class="fas fa-hammer" style="font-size:1.4rem; margin-bottom:10px; display:block;"></i>
+                        <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
+                    </div>
+                </div>
+                <div class="panel" style="opacity:0.42; pointer-events:none;">
+                    <div class="panel-header"><i class="fas fa-map-marked-alt"></i> Route Tracker</div>
+                    <div class="panel-body" style="text-align:center; padding:24px 12px; color:var(--text-3);">
+                        <i class="fas fa-hammer" style="font-size:1.4rem; margin-bottom:10px; display:block;"></i>
+                        <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
+                    </div>
+                </div>
+                <div class="panel" style="opacity:0.42; pointer-events:none;">
+                    <div class="panel-header"><i class="fas fa-user-cog"></i> Account Settings</div>
+                    <div class="panel-body" style="text-align:center; padding:24px 12px; color:var(--text-3);">
+                        <i class="fas fa-hammer" style="font-size:1.4rem; margin-bottom:10px; display:block;"></i>
+                        <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
                     </div>
                 </div>
             </div>

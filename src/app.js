@@ -156,9 +156,11 @@ function renderFuelTable() {
         const vals = cpmRecs.map(r => r.costPerMile);
         document.getElementById('fuelCpmMin').textContent = '$' + Math.min(...vals).toFixed(3);
         document.getElementById('fuelCpmMax').textContent = '$' + Math.max(...vals).toFixed(3);
+        document.getElementById('fuelCpmAvg').textContent = '$' + (vals.reduce((s, v) => s + v, 0) / vals.length).toFixed(3);
     } else {
         document.getElementById('fuelCpmMin').textContent = '--';
         document.getElementById('fuelCpmMax').textContent = '--';
+        document.getElementById('fuelCpmAvg').textContent = '--';
     }
 }
 
@@ -294,12 +296,14 @@ async function addMileageRecord() {
 
 function recalcMileage(data) {
     if (!data.length) return [];
-    const first = new Date(data[0].dateTime);
-    const before = mileageData.slice().reverse().find(d => new Date(d.dateTime) < first);
-    let prevMile = before ? before.currentMileage : data[0].currentMileage;
+    // Sort oldest→newest so diffs and cumulative run chronologically
+    const sorted = [...data].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+    // Find the most recent record in the full dataset that sits before this range (for filtered views)
+    const before = mileageData.find(d => new Date(d.dateTime) < new Date(sorted[0].dateTime));
+    let prevMile = before ? before.currentMileage : sorted[0].currentMileage;
     let total = 0;
-    return data.map((r, i) => {
-        const prev = i > 0 ? data[i-1].currentMileage : prevMile;
+    return sorted.map((r, i) => {
+        const prev = i > 0 ? sorted[i-1].currentMileage : prevMile;
         const diff = Math.max(0, r.currentMileage - prev);
         total += diff;
         return { ...r, mileageDifference: diff, totalMileage: total };
@@ -835,6 +839,41 @@ async function initAppData() {
         console.error("Error initializing app data:", err);
     }
 }
+
+// ── KEYBOARD SHORTCUTS ──
+document.addEventListener('keydown', e => {
+    // Alt+1..4 — switch tabs (works even when focused in a field)
+    if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        const tabMap = { '1': 'overview', '2': 'fuel', '3': 'mileage', '4': 'maintenance' };
+        const tab = tabMap[e.key];
+        if (tab) {
+            e.preventDefault();
+            document.querySelector(`.nav-tabs button[data-tab="${tab}"]`)?.click();
+        }
+        return;
+    }
+    // Skip single-key shortcuts when the user is typing
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if (e.ctrlKey || e.metaKey) return;
+
+    // m — navigate to MileageOS, open input panel, focus odometer field
+    if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        const btn = document.querySelector('.nav-tabs button[data-tab="mileage"]');
+        if (btn && !btn.classList.contains('active')) btn.click();
+        if (document.getElementById('mileageCockpit').classList.contains('input-hidden')) toggleMileageInput();
+        setTimeout(() => document.getElementById('mileOdo').focus(), 50);
+    }
+
+    // g — navigate to FuelOS, open input panel, focus station field
+    if (e.key === 'g' || e.key === 'G') {
+        e.preventDefault();
+        const btn = document.querySelector('.nav-tabs button[data-tab="fuel"]');
+        if (btn && !btn.classList.contains('active')) btn.click();
+        if (document.getElementById('fuelCockpit').classList.contains('input-hidden')) toggleFuelInput();
+        setTimeout(() => document.getElementById('fuelStation').focus(), 50);
+    }
+});
 
 window.initAppData = initAppData;
 window.exportMaintJSON = exportMaintJSON;

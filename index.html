@@ -983,10 +983,14 @@
                         <button class="btn-sm" onclick="fuelMonthlyReport()"><i class="fas fa-calendar-alt"></i> Monthly Report</button>
                         <button class="btn-sm danger" onclick="resetFuelData()"><i class="fas fa-trash"></i> Reset</button>
                     </div>
-                    <div class="chip-grid" style="grid-template-columns:1fr 1fr;margin-bottom:10px">
+                    <div class="chip-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:10px">
                         <div class="chip">
                             <div class="chip-label">Min $/Mile</div>
                             <div class="chip-val" id="fuelCpmMin">--</div>
+                        </div>
+                        <div class="chip">
+                            <div class="chip-label">Avg $/Mile</div>
+                            <div class="chip-val" id="fuelCpmAvg">--</div>
                         </div>
                         <div class="chip">
                             <div class="chip-label">Max $/Mile</div>

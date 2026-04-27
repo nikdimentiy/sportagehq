@@ -123,150 +123,6 @@ document.getElementById('fuelForm').addEventListener('submit', async function(e)
     }
 });
 
-// CSV Import
-document.getElementById('fuelCsvInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    const info = document.getElementById('fuelFileInfo');
-    if (!file) return;
-    info.textContent = `Analyzing: ${file.name}...`;
-    info.style.color = 'var(--cyan)';
-    const reader = new FileReader();
-    reader.onload = async function(ev) {
-        try {
-            const rows = ev.target.result.split(/\r\n|\n/);
-            if (rows.length < 1) throw new Error('Empty');
-            const rawH = rows[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g,''));
-            const hmap = {
-                'date':'date','station':'station','type':'type','fuel type':'type',
-                'price per gallon':'pricePerGallon','price/gal':'pricePerGallon','price':'pricePerGallon',
-                'gallons':'gallons','qty':'gallons','quantity':'gallons','volume':'gallons',
-                'mileage':'mileage','odometer':'mileage',
-                'miles driven':'milesDriven','trip':'milesDriven','distance':'milesDriven',
-                'total cost':'totalCost','total':'totalCost','cost':'totalCost',
-                'mpg':'mpg','cost/mile':'costPerMile'
-            };
-            const headers = rawH.map(h => hmap[h] || h);
-            const imported = [];
-            for (let i = 1; i < rows.length; i++) {
-                if (!rows[i].trim()) continue;
-                const vals = rows[i].split(',').map(v => v.trim().replace(/"/g,''));
-                const rec = {};
-                headers.forEach((h,idx) => { if(vals[idx] !== undefined) rec[hmap[h]||h] = vals[idx]; });
-
-                if (rec.date) {
-                    if (rec.date.includes('/')) {
-                        const dp = rec.date.split('/');
-                        if (dp.length === 3) { let y=dp[2]; if(y.length===2) y='20'+y; rec.date=`${y}-${dp[0].padStart(2,'0')}-${dp[1].padStart(2,'0')}`; }
-                    } else if (rec.date.includes('T')) { rec.date = rec.date.split('T')[0]; }
-                } else { rec.date = getPSTDate(); }
-
-                rec.station = rec.station || 'UNK';
-                rec.type = rec.type || 'UNK';
-                rec.pricePerGallon = parseFloat(rec.pricePerGallon) || 0;
-                rec.gallons = parseFloat(rec.gallons) || 0;
-                rec.mileage = parseInt(rec.mileage) || 0;
-                rec.milesDriven = parseFloat(rec.milesDriven) || 0;
-                rec.totalCost = parseFloat(rec.totalCost);
-                if (isNaN(rec.totalCost) || rec.totalCost <= 0) {
-                    if (rec.pricePerGallon > 0 && rec.gallons > 0) rec.totalCost = parseFloat((rec.pricePerGallon * rec.gallons).toFixed(2));
-                }
-                const csvMpg = parseFloat(rec.mpg);
-                const csvCpm = parseFloat(rec.costPerMile);
-                rec.mpg = (!isNaN(csvMpg) && csvMpg > 0) ? csvMpg : (rec.gallons > 0 && rec.milesDriven > 0) ? parseFloat((rec.milesDriven / rec.gallons).toFixed(1)) : 0;
-                rec.costPerMile = (!isNaN(csvCpm) && csvCpm > 0) ? csvCpm : (rec.milesDriven > 0 && rec.totalCost > 0) ? parseFloat((rec.totalCost / rec.milesDriven).toFixed(3)) : 0;
-                if (rec.totalCost > 0 || (rec.gallons > 0 && rec.milesDriven > 0)) imported.push(rec);
-            }
-
-            // Save each record to Appwrite
-            let savedCount = 0;
-            for (const rec of imported) {
-                try {
-                    await window.createFuelRecord(rec);
-                    savedCount++;
-                } catch (err) {
-                    console.error("Error saving fuel record:", err);
-                }
-            }
-
-            await loadFuel();
-            info.textContent = `Synced: ${savedCount} records`;
-            toast(`${savedCount} fuel records imported`);
-        } catch(err) { info.textContent = `Error: ${err.message}`; info.style.color = 'var(--rose)'; }
-        e.target.value = null;
-    };
-    reader.readAsText(file);
-});
-
-// Mileage CSV Import
-document.getElementById('mileCsvInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    const info = document.getElementById('mileFileInfo');
-    if (!file) return;
-    info.textContent = `Analyzing: ${file.name}...`;
-    info.style.color = 'var(--cyan)';
-    const reader = new FileReader();
-    reader.onload = async function(ev) {
-        try {
-            const rows = ev.target.result.split(/\r\n|\n/);
-            if (rows.length < 2) throw new Error('Empty file');
-            const rawH = rows[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
-            const hmap = {
-                'datetime': 'dateTime', 'date_time': 'dateTime', 'timestamp': 'dateTime',
-                'date': 'dateTime', 'time': 'dateTime',
-                'mileage': 'currentMileage', 'odometer': 'currentMileage', 'odo': 'currentMileage',
-                'current mileage': 'currentMileage', 'current_mileage': 'currentMileage',
-                'currentmileage': 'currentMileage'
-            };
-            const headers = rawH.map(h => hmap[h] || h);
-            const imported = [];
-            for (let i = 1; i < rows.length; i++) {
-                if (!rows[i].trim()) continue;
-                const vals = rows[i].split(',').map(v => v.trim().replace(/"/g, ''));
-                const rec = {};
-                headers.forEach((h, idx) => { if (vals[idx] !== undefined) rec[h] = vals[idx]; });
-
-                let dt = rec.dateTime || '';
-                if (dt) {
-                    if (dt.includes('/')) {
-                        const parts = dt.split(' ');
-                        const dp = parts[0].split('/');
-                        if (dp.length === 3) {
-                            let y = dp[2]; if (y.length === 2) y = '20' + y;
-                            dt = `${y}-${dp[0].padStart(2, '0')}-${dp[1].padStart(2, '0')}`;
-                        }
-                        if (parts[1]) dt += ' ' + parts[1].substring(0, 5);
-                    } else if (dt.includes('T')) {
-                        dt = dt.replace('T', ' ').substring(0, 16);
-                    }
-                    if (dt.length === 10) dt += ' 00:00';
-                } else {
-                    dt = nowPacific();
-                }
-
-                const odo = parseInt(rec.currentMileage);
-                if (!isNaN(odo) && odo > 0) imported.push({ dateTime: dt, currentMileage: odo });
-            }
-
-            let savedCount = 0;
-            for (const rec of imported) {
-                try {
-                    await window.createMileageRecord(rec);
-                    savedCount++;
-                } catch (err) {
-                    console.error('Error saving mileage record:', err);
-                }
-            }
-
-            await loadMileage();
-            resetMileageFilter();
-            info.textContent = `Synced: ${savedCount} records`;
-            toast(`${savedCount} mileage records imported`);
-        } catch (err) { info.textContent = `Error: ${err.message}`; info.style.color = 'var(--rose)'; }
-        e.target.value = null;
-    };
-    reader.readAsText(file);
-});
-
 function renderFuelTable() {
     const tb = document.getElementById('fuelTableBody');
     tb.innerHTML = '';
@@ -319,14 +175,6 @@ function fuelPeakDay() {
     for (const d in dc) { if(dc[d]>max){max=dc[d];peak=d;} }
     area.innerHTML = `<span style="color:var(--cyan);font-family:var(--font-display);font-weight:700;">PEAK ACTIVITY:</span> <strong style="color:white;text-transform:uppercase;">${peak}</strong> (${max} stops)`;
     area.style.display = 'block';
-}
-
-function exportFuelCSV() {
-    if (!fuelRecords.length) { toast('No fuel data'); return; }
-    const headers = ['Date','Station','Type','Gallons','Price/Gal','Total Cost','Miles Driven','MPG','Cost/Mile','Mileage'];
-    const csv = [headers.join(','), ...fuelRecords.map(r => [r.date,r.station,r.type,r.gallons.toFixed(3),r.pricePerGallon.toFixed(3),r.totalCost.toFixed(2),r.milesDriven.toFixed(1),r.mpg.toFixed(1),r.costPerMile.toFixed(3),r.mileage].join(','))].join('\n');
-    downloadBlob(csv, `sportage_fuel_${getPSTDate()}.csv`, 'text/csv');
-    toast('Fuel CSV exported');
 }
 
 async function resetFuelData() {
@@ -639,34 +487,6 @@ function downloadBlob(content, filename, type) {
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
-function exportFuelJSON() {
-    if (!fuelRecords.length) { toast('No fuel data'); return; }
-    const payload = { version: 1, type: 'fuel', exportDate: new Date().toISOString(), fuel: fuelRecords };
-    downloadBlob(JSON.stringify(payload, null, 2), `sportage_fuel_${getPSTDate()}.json`, 'application/json');
-    toast('Fuel data exported');
-}
-
-function exportMileageJSON() {
-    if (!mileageData.length) { toast('No mileage data'); return; }
-    // Match original MileageOS export format
-    const calc = recalcMileage(mileageData);
-    let cumWk = 0, curWkId = '';
-    const exportData = calc.map(r => {
-        const d = new Date(r.dateTime);
-        const wid = getWeekId(d);
-        if (wid !== curWkId) { curWkId = wid; cumWk = 0; }
-        cumWk += r.mileageDifference;
-        const dd = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
-        dd.setUTCDate(dd.getUTCDate()+4-(dd.getUTCDay()||7));
-        const ys = new Date(Date.UTC(dd.getUTCFullYear(),0,1));
-        const wn = Math.ceil((((dd-ys)/86400000)+1)/7);
-        return { dateTime:r.dateTime, currentMileage:r.currentMileage, mileageDifference:r.mileageDifference, weekNumber:wn, weeklyMileage:cumWk, totalMileage:r.totalMileage };
-    }).reverse();
-    const payload = { version: 1, type: 'mileage', exportDate: new Date().toISOString(), mileage: exportData };
-    downloadBlob(JSON.stringify(payload, null, 2), `sportage_mileage_${getPSTDate()}.json`, 'application/json');
-    toast('Mileage data exported');
-}
-
 function exportMaintJSON() {
     if (!maintRecords.length) { toast('No maintenance data'); return; }
     const payload = { version: 1, type: 'maintenance', exportDate: new Date().toISOString(), maintenance: maintRecords };
@@ -858,6 +678,4 @@ async function initAppData() {
 }
 
 window.initAppData = initAppData;
-window.exportFuelJSON = exportFuelJSON;
-window.exportMileageJSON = exportMileageJSON;
 window.exportMaintJSON = exportMaintJSON;

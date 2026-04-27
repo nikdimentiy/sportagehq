@@ -914,12 +914,6 @@
             <div class="panel">
                 <div class="panel-header"><i class="fas fa-gas-pump"></i> Trip Input</div>
                 <div class="panel-body">
-                    <div class="import-zone" onclick="document.getElementById('fuelCsvInput').click()">
-                        <div class="import-zone-label"><i class="fas fa-upload"></i> Import CSV</div>
-                        <div class="import-zone-sub" id="fuelFileInfo">Upload fuel logs to sync</div>
-                        <input type="file" id="fuelCsvInput" accept=".csv,.txt" style="display:none">
-                    </div>
-
                     <form id="fuelForm" autocomplete="off">
                         <div class="field">
                             <div class="field-label">Timestamp</div>
@@ -972,8 +966,6 @@
                     <div class="btn-row">
                         <button class="btn-sm" onclick="fuelMonthlyReport()"><i class="fas fa-calendar-alt"></i> Monthly Report</button>
                         <button class="btn-sm" onclick="fuelPeakDay()"><i class="fas fa-clock"></i> Peak Activity</button>
-                        <button class="btn-sm" onclick="exportFuelCSV()"><i class="fas fa-download"></i> Export CSV</button>
-                        <button class="btn-sm" onclick="exportFuelJSON()"><i class="fas fa-file-code"></i> Export JSON</button>
                         <button class="btn-sm danger" onclick="resetFuelData()"><i class="fas fa-trash"></i> Reset</button>
                     </div>
                     <div id="fuelReport" class="notif"></div>
@@ -1006,12 +998,6 @@
             <div class="panel">
                 <div class="panel-header"><i class="fas fa-tachometer-alt"></i> Trip Computer</div>
                 <div class="panel-body">
-                    <div class="import-zone" onclick="document.getElementById('mileCsvInput').click()">
-                        <div class="import-zone-label"><i class="fas fa-upload"></i> Import CSV</div>
-                        <div class="import-zone-sub" id="mileFileInfo">Upload mileage logs to sync</div>
-                        <input type="file" id="mileCsvInput" accept=".csv,.txt" style="display:none">
-                    </div>
-
                     <div class="field">
                         <div class="field-label">Timestamp</div>
                         <input type="text" id="mileDateTime" placeholder="Select date & time…">
@@ -1071,9 +1057,6 @@
                     </button>
                 </div>
                 <div class="panel-body">
-                    <div class="btn-row">
-                        <button class="btn-sm" onclick="exportMileageJSON()"><i class="fas fa-file-code"></i> Export JSON</button>
-                    </div>
                     <div class="table-wrap">
                         <table>
                             <thead><tr>

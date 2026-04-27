@@ -72,6 +72,7 @@ document.getElementById('navTabs').addEventListener('click', e => {
     btn.classList.add('active');
     document.getElementById('page-' + btn.dataset.tab).classList.add('active');
     if (btn.dataset.tab === 'overview') refreshOverview();
+    if (btn.dataset.tab === 'system') updateSystemCounts();
 });
 
 // ══════════════════════════════════════════════════
@@ -632,6 +633,67 @@ function updateVaultCounts() {
     if (mileEl) mileEl.textContent = mileageData.length;
 }
 
+function updateSystemCounts() {
+    const fuelEl = document.getElementById('sysWipeFuelCount');
+    const mileEl = document.getElementById('sysWipeMileCount');
+    const maintEl = document.getElementById('sysWipeMaintCount');
+    if (fuelEl) fuelEl.textContent = fuelRecords.length;
+    if (mileEl) mileEl.textContent = mileageData.length;
+    if (maintEl) maintEl.textContent = maintRecords.length;
+}
+
+async function wipeAllData() {
+    if (!window.currentUser) { toast('Not logged in'); return; }
+    if (!confirm('⚠️ NUCLEAR WIPE\n\nPermanently delete ALL data from Appwrite cloud and local cache:\n\n• All fuel records\n• All mileage logs\n• All maintenance records\n\nThis CANNOT be undone.')) return;
+    if (!confirm('Final confirmation — delete everything?')) return;
+
+    const btn = document.getElementById('systemWipeBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp; Wiping...'; }
+
+    try {
+        let offset = 0;
+        while (true) {
+            const res = await window.appwriteDB.listDocuments(DB_ID, FUEL_COL, [
+                window.appwriteQuery.equal('userId', window.currentUser.$id),
+                window.appwriteQuery.limit(100),
+                window.appwriteQuery.offset(offset)
+            ]);
+            if (!res.documents || !res.documents.length) break;
+            for (const doc of res.documents) {
+                await window.appwriteDB.deleteDocument(DB_ID, FUEL_COL, doc.$id);
+            }
+            if (res.documents.length < 100) break;
+            offset += 100;
+        }
+
+        await window.deleteMileageRecordsForUser();
+        await window.deleteMaintRecordsForUser();
+
+        const uid = window.currentUser.$id;
+        ['fuel_records_cache', 'mileage_records_cache', 'maintenance_records_cache']
+            .forEach(k => { try { localStorage.removeItem(k + '_' + uid); } catch(e) {} });
+        [FUEL_KEY, MILE_KEY, MAINT_KEY]
+            .forEach(k => { try { localStorage.removeItem(k); } catch(e) {} });
+
+        fuelRecords = []; mileageData = []; maintRecords = [];
+        renderFuelTable();
+        processAndRenderMileage([]);
+        renderMaintTable();
+        updateMaintSummary();
+        updateVaultCounts();
+        updateSystemCounts();
+        refreshOverview();
+        document.getElementById('fuelReport').style.display = 'none';
+
+        toast('All data wiped');
+    } catch (err) {
+        console.error('Wipe error:', err);
+        toast('Error: ' + (err.message || 'Wipe failed'));
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-skull-crossbones"></i>&nbsp; Wipe All Data'; }
+    }
+}
+
 // ══════════════════════════════════════════════════
 // MAINTENANCE
 // ══════════════════════════════════════════════════
@@ -834,6 +896,7 @@ async function initAppData() {
         await loadMileage();
         await loadMaint();
         updateVaultCounts();
+        updateSystemCounts();
         refreshOverview();
     } catch (err) {
         console.error("Error initializing app data:", err);
@@ -886,3 +949,22 @@ window.editMileageRow = editMileageRow;
 window.saveMileageRow = saveMileageRow;
 window.editMaintRow = editMaintRow;
 window.saveMaintRow = saveMaintRow;
+
+// Functions called from inline onclick attributes in HTML
+window.toggleFuelInput = toggleFuelInput;
+window.fuelMonthlyReport = fuelMonthlyReport;
+window.resetFuelData = resetFuelData;
+window.addMileageRecord = addMileageRecord;
+window.applyMileageFilter = applyMileageFilter;
+window.mileFilterLastWeek = mileFilterLastWeek;
+window.mileFilterLastMonth = mileFilterLastMonth;
+window.mileFilterLastQuarter = mileFilterLastQuarter;
+window.resetMileageFilter = resetMileageFilter;
+window.purgeMileageData = purgeMileageData;
+window.toggleMileageInput = toggleMileageInput;
+window.addMaintRecord = addMaintRecord;
+window.deleteMaintRecord = deleteMaintRecord;
+window.purgeMaintData = purgeMaintData;
+window.toggleMaintInput = toggleMaintInput;
+window.wipeAllData = wipeAllData;
+window.updateSystemCounts = updateSystemCounts;

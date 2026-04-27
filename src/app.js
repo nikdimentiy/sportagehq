@@ -134,6 +134,7 @@ function renderFuelTable() {
             else if (r.mpg < prev.mpg) mpgClass = 'td-rose';
         }
         const tr = document.createElement('tr');
+        tr.dataset.id = r.$id;
         tr.innerHTML = `
             <td class="td-highlight">${formatDisplayDate(r.date)}</td>
             <td style="text-transform:capitalize">${r.station}</td>
@@ -145,9 +146,68 @@ function renderFuelTable() {
             <td class="${mpgClass}" style="font-weight:600">${r.mpg ? r.mpg.toFixed(1) : '-'}</td>
             <td>${r.costPerMile ? r.costPerMile.toFixed(3) : '-'}</td>
             <td class="td-mono" style="color:var(--text-3)">${r.mileage}</td>
+            <td><button class="btn-sm" style="padding:2px 7px;font-size:0.7rem" onclick="editFuelRow('${r.$id}')"><i class="fas fa-pencil-alt"></i></button></td>
         `;
         tb.appendChild(tr);
     });
+}
+
+function editFuelRow(docId) {
+    const r = fuelRecords.find(r => r.$id === docId);
+    if (!r) return;
+    const tr = document.querySelector(`#fuelTableBody tr[data-id="${docId}"]`);
+    if (!tr) return;
+    tr.classList.add('editing');
+    const inp = (type, field, val, extra = '') =>
+        `<input type="${type}" data-field="${field}" value="${val}" class="row-edit-input" ${extra}>`;
+    tr.innerHTML = `
+        <td>${inp('date', 'date', r.date || '')}</td>
+        <td>${inp('text', 'station', r.station || '')}</td>
+        <td><select data-field="type" class="row-edit-input">
+            <option value="Regular"${r.type === 'Regular' ? ' selected' : ''}>Regular</option>
+            <option value="Mid-Grade"${r.type === 'Mid-Grade' ? ' selected' : ''}>Mid-Grade</option>
+            <option value="Premium"${r.type === 'Premium' ? ' selected' : ''}>Premium</option>
+        </select></td>
+        <td>${inp('number', 'gallons', r.gallons || 0, 'step="0.001" min="0"')}</td>
+        <td>${inp('number', 'ppg', r.pricePerGallon || 0, 'step="0.001" min="0"')}</td>
+        <td style="color:var(--text-3);font-size:0.75rem">$${r.totalCost?.toFixed(2) || '—'}</td>
+        <td>${inp('number', 'miles', r.milesDriven || 0, 'step="0.1" min="0"')}</td>
+        <td style="color:var(--text-3);font-size:0.75rem">${r.mpg?.toFixed(1) || '—'}</td>
+        <td style="color:var(--text-3);font-size:0.75rem">${r.costPerMile?.toFixed(3) || '—'}</td>
+        <td>${inp('number', 'odo', r.mileage || 0, 'step="1" min="0"')}</td>
+        <td style="white-space:nowrap">
+            <button class="btn-sm" style="padding:2px 7px;font-size:0.7rem" onclick="saveFuelRow('${docId}')"><i class="fas fa-check"></i></button>
+            <button class="btn-sm" style="padding:2px 7px;font-size:0.7rem;margin-left:3px" onclick="renderFuelTable()"><i class="fas fa-times"></i></button>
+        </td>
+    `;
+}
+
+async function saveFuelRow(docId) {
+    const tr = document.querySelector(`#fuelTableBody tr[data-id="${docId}"]`);
+    if (!tr) return;
+    const get = field => tr.querySelector(`[data-field="${field}"]`).value;
+    const date = get('date');
+    const station = get('station').trim().toUpperCase();
+    const type = get('type');
+    const gallons = parseFloat(get('gallons'));
+    const ppg = parseFloat(get('ppg'));
+    const miles = parseFloat(get('miles'));
+    const odo = parseInt(get('odo'));
+    if (!date || !station || !type || isNaN(gallons) || isNaN(ppg) || isNaN(miles) || isNaN(odo)) {
+        toast('Please fill all required fields.');
+        return;
+    }
+    const totalCost = parseFloat((ppg * gallons).toFixed(2));
+    const mpg = (gallons > 0 && miles > 0) ? parseFloat((miles / gallons).toFixed(1)) : 0;
+    const costPerMile = (miles > 0 && totalCost > 0) ? parseFloat((totalCost / miles).toFixed(3)) : 0;
+    try {
+        await window.updateFuelRecord(docId, { date, station, type, gallons, pricePerGallon: ppg, milesDriven: miles, mileage: odo, totalCost, mpg, costPerMile });
+        await loadFuel();
+        toast('Fuel record updated');
+    } catch (err) {
+        console.error('Error updating fuel record:', err);
+        toast('Error: ' + (err.message || 'Failed to update'));
+    }
 }
 
 function fuelMonthlyReport() {
@@ -262,6 +322,7 @@ function renderMileageTable(data) {
         const d = new Date(r.dateTime);
         const day = ptDayName(d);
         const tr = document.createElement('tr');
+        tr.dataset.id = r.$id;
         if (day === 'Friday') tr.classList.add('friday-row');
         if (day === 'Monday') tr.classList.add('monday-row');
         const gas = r._isGas ? `<span class="gas-icon"><i class="fas fa-gas-pump"></i></span>` : '';
@@ -272,9 +333,48 @@ function renderMileageTable(data) {
             <td class="td-mono td-cyan">${r.currentMileage.toLocaleString()}</td>
             <td class="td-mono td-highlight">+${r.mileageDifference.toLocaleString()}</td>
             <td>${r.totalMileage.toLocaleString()}</td>
+            <td><button class="btn-sm" style="padding:2px 7px;font-size:0.7rem" onclick="editMileageRow('${r.$id}')"><i class="fas fa-pencil-alt"></i></button></td>
         `;
         tb.appendChild(tr);
     });
+}
+
+function editMileageRow(docId) {
+    const r = mileageData.find(r => r.$id === docId);
+    if (!r) return;
+    const tr = document.querySelector(`#mileTableBody tr[data-id="${docId}"]`);
+    if (!tr) return;
+    tr.classList.add('editing');
+    const dtVal = r.dateTime ? r.dateTime.replace(' ', 'T').substring(0, 16) : '';
+    tr.innerHTML = `
+        <td><input type="datetime-local" data-field="dateTime" value="${dtVal}" class="row-edit-input" style="min-width:160px"></td>
+        <td style="color:var(--text-3);font-size:0.75rem">—</td>
+        <td><input type="number" data-field="currentMileage" value="${r.currentMileage || 0}" class="row-edit-input" step="1" min="0" style="width:80px"></td>
+        <td style="color:var(--text-3);font-size:0.75rem">recalc</td>
+        <td style="color:var(--text-3);font-size:0.75rem">recalc</td>
+        <td style="white-space:nowrap">
+            <button class="btn-sm" style="padding:2px 7px;font-size:0.7rem" onclick="saveMileageRow('${docId}')"><i class="fas fa-check"></i></button>
+            <button class="btn-sm" style="padding:2px 7px;font-size:0.7rem;margin-left:3px" onclick="cancelMileageEdit()"><i class="fas fa-times"></i></button>
+        </td>
+    `;
+}
+
+async function saveMileageRow(docId) {
+    const tr = document.querySelector(`#mileTableBody tr[data-id="${docId}"]`);
+    if (!tr) return;
+    const dtRaw = tr.querySelector('[data-field="dateTime"]').value;
+    const odo = parseInt(tr.querySelector('[data-field="currentMileage"]').value);
+    if (!dtRaw || isNaN(odo) || odo < 0) { toast('Invalid input.'); return; }
+    const dateTime = dtRaw.replace('T', ' ');
+    try {
+        await window.updateMileageRecord(docId, { dateTime, currentMileage: odo });
+        await loadMileage();
+        resetMileageFilter();
+        toast('Mileage record updated');
+    } catch (err) {
+        console.error('Error updating mileage record:', err);
+        toast('Error: ' + (err.message || 'Failed to update'));
+    }
 }
 
 function updateMileageGauges(data) {
@@ -597,7 +697,7 @@ function renderMaintTable() {
         return;
     }
     tbody.innerHTML = maintRecords.map(r => `
-        <tr>
+        <tr data-id="${r.$id}">
             <td>${r.date || '—'}</td>
             <td>${r.type || '—'}</td>
             <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${r.notes || ''}">${r.notes || '—'}</td>
@@ -606,13 +706,72 @@ function renderMaintTable() {
             <td style="text-align:right">${r.cost != null ? '$' + r.cost.toFixed(2) : '—'}</td>
             <td>${r.nextDate || '—'}</td>
             <td style="text-align:right">${r.nextMiles != null ? r.nextMiles.toLocaleString() : '—'}</td>
-            <td style="text-align:center">
+            <td style="text-align:center;white-space:nowrap">
+                <button class="btn-sm" style="padding:2px 7px;font-size:0.7rem;margin-right:2px" onclick="editMaintRow('${r.$id}')">
+                    <i class="fas fa-pencil-alt"></i>
+                </button>
                 <button class="btn-sm danger" style="padding:2px 8px;font-size:0.7rem;" onclick="deleteMaintRecord('${r.$id}')">
                     <i class="fas fa-times"></i>
                 </button>
             </td>
         </tr>
     `).join('');
+}
+
+function editMaintRow(docId) {
+    const r = maintRecords.find(r => r.$id === docId);
+    if (!r) return;
+    const tr = document.querySelector(`#maintTableBody tr[data-id="${docId}"]`);
+    if (!tr) return;
+    tr.classList.add('editing');
+    const inp = (type, field, val, extra = '') =>
+        `<input type="${type}" data-field="${field}" value="${val != null ? val : ''}" class="row-edit-input" ${extra}>`;
+    const serviceTypes = ['Oil Change','Tire Rotation','Tire Replacement','Brake Service','Air Filter','Cabin Filter','Battery','Spark Plugs','Transmission Service','Coolant Flush','Alignment','Inspection','Scheduled Maintenance','Other'];
+    const typeOpts = serviceTypes.map(t => `<option value="${t}"${r.type === t ? ' selected' : ''}>${t}</option>`).join('');
+    tr.innerHTML = `
+        <td>${inp('date', 'date', r.date || '')}</td>
+        <td><select data-field="type" class="row-edit-input">${typeOpts}</select></td>
+        <td>${inp('text', 'notes', r.notes || '')}</td>
+        <td>${inp('text', 'shop', r.shop || '')}</td>
+        <td>${inp('number', 'odo', r.odo != null ? r.odo : '', 'step="1" min="0"')}</td>
+        <td>${inp('number', 'cost', r.cost != null ? r.cost : '', 'step="0.01" min="0"')}</td>
+        <td>${inp('date', 'nextDate', r.nextDate || '')}</td>
+        <td>${inp('number', 'nextMiles', r.nextMiles != null ? r.nextMiles : '', 'step="1" min="0"')}</td>
+        <td style="white-space:nowrap">
+            <button class="btn-sm" style="padding:2px 7px;font-size:0.7rem" onclick="saveMaintRow('${docId}')"><i class="fas fa-check"></i></button>
+            <button class="btn-sm" style="padding:2px 7px;font-size:0.7rem;margin-left:3px" onclick="renderMaintTable()"><i class="fas fa-times"></i></button>
+        </td>
+    `;
+}
+
+async function saveMaintRow(docId) {
+    const tr = document.querySelector(`#maintTableBody tr[data-id="${docId}"]`);
+    if (!tr) return;
+    const get = field => tr.querySelector(`[data-field="${field}"]`).value;
+    const date = get('date');
+    const type = get('type');
+    if (!date || !type) { toast('Date and type are required.'); return; }
+    const odoVal = get('odo');
+    const costVal = get('cost');
+    const nextMilesVal = get('nextMiles');
+    const record = {
+        date,
+        type,
+        notes: get('notes').trim() || null,
+        shop: get('shop').trim() || null,
+        odo: odoVal !== '' ? parseInt(odoVal) : null,
+        cost: costVal !== '' ? parseFloat(costVal) : null,
+        nextDate: get('nextDate') || null,
+        nextMiles: nextMilesVal !== '' ? parseInt(nextMilesVal) : null
+    };
+    try {
+        await window.updateMaintRecord(docId, record);
+        await loadMaint();
+        toast('Service record updated');
+    } catch (err) {
+        console.error('Error updating maintenance record:', err);
+        toast('Error: ' + (err.message || 'Failed to update'));
+    }
 }
 
 function updateMaintSummary() {
@@ -679,3 +838,12 @@ async function initAppData() {
 
 window.initAppData = initAppData;
 window.exportMaintJSON = exportMaintJSON;
+window.renderFuelTable = renderFuelTable;
+window.renderMaintTable = renderMaintTable;
+window.cancelMileageEdit = () => processAndRenderMileage(mileageData);
+window.editFuelRow = editFuelRow;
+window.saveFuelRow = saveFuelRow;
+window.editMileageRow = editMileageRow;
+window.saveMileageRow = saveMileageRow;
+window.editMaintRow = editMaintRow;
+window.saveMaintRow = saveMaintRow;

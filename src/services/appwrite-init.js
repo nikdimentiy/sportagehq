@@ -322,6 +322,21 @@ window.loadMaintFromAppwrite = async () => {
     }
 };
 
+window.updateFuelRecord = async (docId, data) => {
+    if (!window.currentUser) throw new Error("Not authenticated");
+    await databases.updateDocument(DB_ID, FUEL_COL, docId, data);
+};
+
+window.updateMileageRecord = async (docId, data) => {
+    if (!window.currentUser) throw new Error("Not authenticated");
+    await databases.updateDocument(DB_ID, MILE_COL, docId, data);
+};
+
+window.updateMaintRecord = async (docId, data) => {
+    if (!window.currentUser) throw new Error("Not authenticated");
+    await databases.updateDocument(DB_ID, MAINT_COL, docId, data);
+};
+
 window.deleteMaintRecordFromAppwrite = async (docId) => {
     if (!window.currentUser) throw new Error("Not authenticated");
     try {

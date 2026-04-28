@@ -1424,11 +1424,35 @@
                         <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
                     </div>
                 </div>
-                <div class="panel" style="opacity:0.42; pointer-events:none;">
+                <div class="panel">
                     <div class="panel-header"><i class="fas fa-chart-pie"></i> Cost Analytics</div>
-                    <div class="panel-body" style="text-align:center; padding:24px 12px; color:var(--text-3);">
-                        <i class="fas fa-hammer" style="font-size:1.4rem; margin-bottom:10px; display:block;"></i>
-                        <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
+                    <div class="panel-body">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">
+                            <div class="chip">
+                                <div class="chip-label">Avg Cost / Trip Day</div>
+                                <div class="chip-val" id="caCostPerDay">—</div>
+                            </div>
+                            <div class="chip">
+                                <div class="chip-label">Cost / Mile</div>
+                                <div class="chip-val" id="caCostPerMile">—</div>
+                            </div>
+                            <div class="chip">
+                                <div class="chip-label">Real Avg Price / Gal</div>
+                                <div class="chip-val" id="caVolWeightedPrice">—</div>
+                            </div>
+                            <div class="chip">
+                                <div class="chip-label">Fuel Price Trend</div>
+                                <div class="chip-val" id="caFuelPriceTrend">—</div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:16px;">
+                            <div style="font-size:0.65rem;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;font-family:var(--font-display);">Weekly Fuel Spend</div>
+                            <div id="caWeeklyTable"></div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.65rem;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;font-family:var(--font-display);">Monthly Fuel Spend</div>
+                            <div id="caMonthlyTable"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="panel" style="opacity:0.42; pointer-events:none;">

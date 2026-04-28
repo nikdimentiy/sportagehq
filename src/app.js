@@ -21,7 +21,7 @@ import {
     updateMaintSummary
 } from './features/maintenance.js';
 import {
-    exportMaintJSON, exportFullBackup, updateVaultCounts, updateSystemCounts, wipeAllData, updateSmartAlerts
+    exportMaintJSON, exportFullBackup, updateVaultCounts, updateSystemCounts, wipeAllData, updateSmartAlerts, refreshCostAnalytics
 } from './features/system.js';
 
 // ── RESTORE TOGGLE STATES ──
@@ -39,7 +39,7 @@ function switchTab(tabName) {
     if (bottomBtn) bottomBtn.classList.add('active');
     document.getElementById('page-' + tabName)?.classList.add('active');
     if (tabName === 'overview') refreshOverview();
-    if (tabName === 'system') { updateSystemCounts(); updateSmartAlerts(); }
+    if (tabName === 'system') { updateSystemCounts(); updateSmartAlerts(); refreshCostAnalytics(); }
 }
 
 document.getElementById('navTabs').addEventListener('click', e => {
@@ -63,6 +63,7 @@ async function initAppData() {
         updateVaultCounts();
         updateSystemCounts();
         updateSmartAlerts();
+        refreshCostAnalytics();
         refreshOverview();
     } catch (err) {
         console.error("Error initializing app data:", err);
@@ -134,3 +135,4 @@ window.purgeMaintData       = purgeMaintData;
 window.wipeAllData          = wipeAllData;
 window.updateSystemCounts   = updateSystemCounts;
 window.updateSmartAlerts    = updateSmartAlerts;
+window.refreshCostAnalytics = refreshCostAnalytics;

@@ -255,7 +255,7 @@ export function refreshCostAnalytics() {
     const timesOfDay = [];
     records.forEach(r => {
         if (r.time) {
-            const [h, m] = r.time.split(':').map(Number);
+            const [h, m] = r.time.split(/[:\.]/).map(Number);
             if (!isNaN(h) && !isNaN(m)) timesOfDay.push(h * 60 + m);
         }
     });

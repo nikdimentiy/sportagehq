@@ -251,20 +251,15 @@ export function refreshCostAnalytics() {
         return;
     }
 
-    // Most frequent cluster of buy time — exact HH:MM, gap-based clustering
+    // Most frequent cluster of buy time — uses r.time (HH:MM) only; $createdAt is unreliable (batch sync)
     const timesOfDay = [];
     records.forEach(r => {
         if (r.time) {
             const [h, m] = r.time.split(':').map(Number);
             if (!isNaN(h) && !isNaN(m)) timesOfDay.push(h * 60 + m);
-        } else if (r.$createdAt) {
-            try {
-                const d = new Date(r.$createdAt);
-                timesOfDay.push(d.getHours() * 60 + d.getMinutes());
-            } catch (e) {}
         }
     });
-    if (timesOfDay.length > 0) {
+    if (timesOfDay.length >= 2) {
         timesOfDay.sort((a, b) => a - b);
         // Split into clusters wherever consecutive times are > 60 min apart
         const GAP = 60;

@@ -1,12 +1,10 @@
 import { state } from '../state.js';
 import { toast, nowPacific, ptDateStr, ptDayName, getWeekId, TZ } from '../utils/helpers.js';
 
-let fpMileMain, fpMileStart, fpMileEnd;
+let fpMileMain;
 
 document.addEventListener('DOMContentLoaded', () => {
-    fpMileMain  = flatpickr('#mileDateTime', { enableTime:true, dateFormat:'Y-m-d H:i', time_24hr:true, defaultDate:nowPacific() });
-    fpMileStart = flatpickr('#mileStartDate', { dateFormat:'Y-m-d' });
-    fpMileEnd   = flatpickr('#mileEndDate',   { dateFormat:'Y-m-d' });
+    fpMileMain = flatpickr('#mileDateTime', { enableTime:true, dateFormat:'Y-m-d H:i', time_24hr:true, defaultDate:nowPacific() });
 });
 
 export async function loadMileage() {
@@ -28,7 +26,7 @@ export async function addMileageRecord() {
     try {
         await window.createMileageRecord(record);
         await loadMileage();
-        resetMileageFilter();
+        processAndRenderMileage(state.mileageData);
         document.getElementById('mileOdo').value = '';
         fpMileMain.setDate(nowPacific(), true);
         toast('Mileage entry logged');
@@ -115,7 +113,7 @@ export async function saveMileageRow(docId) {
     try {
         await window.updateMileageRecord(docId, { dateTime, currentMileage: odo });
         await loadMileage();
-        resetMileageFilter();
+        processAndRenderMileage(state.mileageData);
         toast('Mileage record updated');
     } catch (err) {
         console.error('Error updating mileage record:', err);
@@ -160,40 +158,6 @@ export function updateMileageChips(data) {
     const dn = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     data.forEach(r => { dm[new Date(r.dateTime).getDay()] += r.mileageDifference; });
     let bi=-1, mx=-1; for(const d in dm){if(dm[d]>mx){mx=dm[d];bi=d;}} el('mlBusiestDay').textContent = mx>0?dn[bi]:'—';
-}
-
-export function applyMileageFilter() {
-    const s = fpMileStart.selectedDates[0], e = fpMileEnd.selectedDates[0];
-    if (!s || !e) { toast('Select both dates.'); return; }
-    const start = new Date(s).setHours(0,0,0,0), end = new Date(e).setHours(23,59,59,999);
-    processAndRenderMileage(state.mileageData.filter(r => { const d = new Date(r.dateTime); return d >= start && d <= end; }));
-}
-
-export function setMileFilter(s, e) { fpMileStart.setDate(s,true); fpMileEnd.setDate(e,true); applyMileageFilter(); }
-
-export function mileFilterLastWeek() {
-    const now = new Date(); const t = now.getDay();
-    const end = new Date(now.setDate(now.getDate()-t-1));
-    const start = new Date(new Date().setDate(end.getDate()-6));
-    setMileFilter(start, end);
-}
-
-export function mileFilterLastMonth() {
-    const n = new Date();
-    setMileFilter(new Date(n.getFullYear(),n.getMonth()-1,1), new Date(n.getFullYear(),n.getMonth(),0));
-}
-
-export function mileFilterLastQuarter() {
-    const n = new Date(), q = Math.floor(n.getMonth()/3);
-    let s, e;
-    if (q===0) { s=new Date(n.getFullYear()-1,9,1); e=new Date(n.getFullYear()-1,11,31); }
-    else { const sm=(q-1)*3; s=new Date(n.getFullYear(),sm,1); e=new Date(n.getFullYear(),sm+3,0); }
-    setMileFilter(s, e);
-}
-
-export function resetMileageFilter() {
-    fpMileStart.clear(); fpMileEnd.clear();
-    processAndRenderMileage(state.mileageData);
 }
 
 export function cancelMileageEdit() {

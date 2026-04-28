@@ -12,8 +12,7 @@ import {
 import {
     loadMileage, processAndRenderMileage, cancelMileageEdit,
     editMileageRow, saveMileageRow, addMileageRecord,
-    applyMileageFilter, mileFilterLastWeek, mileFilterLastMonth,
-    mileFilterLastQuarter, resetMileageFilter, purgeMileageData, toggleMileageInput, restoreMileageInputState
+    purgeMileageData, toggleMileageInput, restoreMileageInputState
 } from './features/mileage.js';
 import {
     loadMaint, renderMaintTable, editMaintRow, saveMaintRow,
@@ -21,7 +20,8 @@ import {
     updateMaintSummary
 } from './features/maintenance.js';
 import {
-    exportMaintJSON, exportFullBackup, updateVaultCounts, updateSystemCounts, wipeAllData, updateSmartAlerts, refreshCostAnalytics
+    exportMaintJSON, exportFullBackup, updateVaultCounts, updateSystemCounts, wipeAllData, updateSmartAlerts, refreshCostAnalytics,
+    routeTrackerFilter, applyRouteCustomFilter, refreshRouteTracker
 } from './features/system.js';
 
 // ── RESTORE TOGGLE STATES ──
@@ -39,7 +39,7 @@ function switchTab(tabName) {
     if (bottomBtn) bottomBtn.classList.add('active');
     document.getElementById('page-' + tabName)?.classList.add('active');
     if (tabName === 'overview') refreshOverview();
-    if (tabName === 'system') { updateSystemCounts(); updateSmartAlerts(); refreshCostAnalytics(); }
+    if (tabName === 'system') { updateSystemCounts(); updateSmartAlerts(); refreshCostAnalytics(); refreshRouteTracker(); }
 }
 
 document.getElementById('navTabs').addEventListener('click', e => {
@@ -122,11 +122,6 @@ window.toggleFuelInput      = toggleFuelInput;
 window.fuelMonthlyReport    = fuelMonthlyReport;
 window.resetFuelData        = resetFuelData;
 window.addMileageRecord     = addMileageRecord;
-window.applyMileageFilter   = applyMileageFilter;
-window.mileFilterLastWeek   = mileFilterLastWeek;
-window.mileFilterLastMonth  = mileFilterLastMonth;
-window.mileFilterLastQuarter = mileFilterLastQuarter;
-window.resetMileageFilter   = resetMileageFilter;
 window.purgeMileageData     = purgeMileageData;
 window.toggleMileageInput   = toggleMileageInput;
 window.addMaintRecord       = addMaintRecord;
@@ -136,3 +131,5 @@ window.wipeAllData          = wipeAllData;
 window.updateSystemCounts   = updateSystemCounts;
 window.updateSmartAlerts    = updateSmartAlerts;
 window.refreshCostAnalytics = refreshCostAnalytics;
+window.routeTrackerFilter   = routeTrackerFilter;
+window.applyRouteCustomFilter = applyRouteCustomFilter;

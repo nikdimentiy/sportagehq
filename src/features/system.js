@@ -1,7 +1,7 @@
 import { state } from '../state.js';
 import { toast, getPSTDate } from '../utils/helpers.js';
 import { renderFuelTable } from './fuel.js';
-import { processAndRenderMileage, resetMileageFilter } from './mileage.js';
+import { processAndRenderMileage, recalcMileage } from './mileage.js';
 import { renderMaintTable, updateMaintSummary } from './maintenance.js';
 import { refreshOverview } from './overview.js';
 
@@ -233,6 +233,84 @@ export async function wipeAllData() {
     } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-skull-crossbones"></i>&nbsp; Wipe All Data'; }
     }
+}
+
+// ── Route Tracker ─────────────────────────────────────────────────────────────
+
+let fpRouteStart, fpRouteEnd;
+let _rtPeriod = 'thisWeek';
+
+document.addEventListener('DOMContentLoaded', () => {
+    fpRouteStart = flatpickr('#routeStartDate', { dateFormat: 'Y-m-d' });
+    fpRouteEnd   = flatpickr('#routeEndDate',   { dateFormat: 'Y-m-d' });
+});
+
+export function routeTrackerFilter(period) {
+    _rtPeriod = period;
+    document.querySelectorAll('.rt-filter-btn').forEach(b => { b.style.background = ''; b.style.borderColor = ''; });
+    const btn = document.getElementById('rtBtn' + period);
+    if (btn) { btn.style.background = 'rgba(0,229,255,0.12)'; btn.style.borderColor = 'rgba(0,229,255,0.4)'; }
+
+    const customRow = document.getElementById('rtCustomRow');
+    if (period === 'custom') { customRow.style.display = 'grid'; return; }
+    customRow.style.display = 'none';
+
+    const now = new Date();
+    let start, end = new Date(now);
+
+    if (period === 'thisWeek') {
+        const day = now.getDay();
+        start = new Date(now);
+        start.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+    } else if (period === 'lastWeek') {
+        const day = now.getDay();
+        const lastMon = new Date(now);
+        lastMon.setDate(now.getDate() - (day === 0 ? 6 : day - 1) - 7);
+        end = new Date(lastMon);
+        end.setDate(lastMon.getDate() + 6);
+        start = lastMon;
+    } else if (period === 'lastQuarter') {
+        const q = Math.floor(now.getMonth() / 3);
+        if (q === 0) { start = new Date(now.getFullYear()-1, 9, 1); end = new Date(now.getFullYear()-1, 11, 31); }
+        else { const sm = (q-1)*3; start = new Date(now.getFullYear(), sm, 1); end = new Date(now.getFullYear(), sm+3, 0); }
+    } else if (period === 'ytd') {
+        start = new Date(now.getFullYear(), 0, 1);
+    }
+
+    renderRouteStats(getRouteData(start, end));
+}
+
+export function applyRouteCustomFilter() {
+    const s = fpRouteStart.selectedDates[0], e = fpRouteEnd.selectedDates[0];
+    if (!s || !e) { toast('Select both dates.'); return; }
+    renderRouteStats(getRouteData(s, e));
+}
+
+export function refreshRouteTracker() { routeTrackerFilter(_rtPeriod); }
+
+function getRouteData(start, end) {
+    const s = new Date(start).setHours(0,0,0,0), e = new Date(end).setHours(23,59,59,999);
+    return state.mileageData.filter(r => { const d = new Date(r.dateTime); return d >= s && d <= e; });
+}
+
+function renderRouteStats(filtered) {
+    const el = id => document.getElementById(id);
+    if (!filtered.length) {
+        ['rtTotalMiles','rtEntries','rtAvgTrip','rtLongest','rtPeakDay'].forEach(id => el(id).textContent = '—');
+        return;
+    }
+    const calc = recalcMileage(filtered);
+    const trips = calc.map(r => r.mileageDifference);
+    const total = trips.reduce((s, t) => s + t, 0);
+    el('rtTotalMiles').textContent = total.toLocaleString() + ' mi';
+    el('rtEntries').textContent = calc.length;
+    el('rtAvgTrip').textContent = (total / calc.length).toFixed(1) + ' mi';
+    el('rtLongest').textContent = Math.max(...trips).toLocaleString() + ' mi';
+    const dm = {0:0,1:0,2:0,3:0,4:0,5:0,6:0};
+    const dn = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    calc.forEach(r => { dm[new Date(r.dateTime).getDay()] += r.mileageDifference; });
+    let bi=-1, mx=-1; for (const d in dm) { if (dm[d] > mx) { mx=dm[d]; bi=d; } }
+    el('rtPeakDay').textContent = mx > 0 ? dn[bi] : '—';
 }
 
 // ── Cost Analytics ────────────────────────────────────────────────────────────

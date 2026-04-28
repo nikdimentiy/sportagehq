@@ -1160,19 +1160,6 @@
                     </div>
                     <button class="btn-primary" onclick="addMileageRecord()" style="margin-bottom:14px"><i class="fas fa-plus-circle"></i> Log Entry</button>
 
-                    <div style="height:1px;background:var(--border);margin:8px 0 14px;"></div>
-                    <div class="field-label" style="margin-bottom:10px">Date Filter</div>
-                    <div class="filter-row">
-                        <input type="text" id="mileStartDate" placeholder="Start">
-                        <input type="text" id="mileEndDate" placeholder="End">
-                        <button class="apply-btn" onclick="applyMileageFilter()"><i class="fas fa-arrow-right"></i></button>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
-                        <button class="btn-sm" onclick="mileFilterLastWeek()">Last Week</button>
-                        <button class="btn-sm" onclick="mileFilterLastMonth()">Last Month</button>
-                        <button class="btn-sm" onclick="mileFilterLastQuarter()">Quarter</button>
-                        <button class="btn-sm" onclick="resetMileageFilter()">Reset</button>
-                    </div>
                     <button class="btn-sm danger" onclick="purgeMileageData()" style="width:100%;justify-content:center;margin-top:6px;">
                         <i class="fas fa-trash-alt"></i> Factory Reset
                     </button>
@@ -1421,13 +1408,6 @@
                         </button>
                     </div>
                 </div>
-                <div class="panel" style="opacity:0.42; pointer-events:none;">
-                    <div class="panel-header"><i class="fas fa-car"></i> Vehicle Profiles</div>
-                    <div class="panel-body" style="text-align:center; padding:24px 12px; color:var(--text-3);">
-                        <i class="fas fa-hammer" style="font-size:1.4rem; margin-bottom:10px; display:block;"></i>
-                        <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
-                    </div>
-                </div>
                 <div class="panel">
                     <div class="panel-header"><i class="fas fa-chart-pie"></i> Cost Analytics</div>
                     <div class="panel-body">
@@ -1455,18 +1435,28 @@
                         </div>
                     </div>
                 </div>
-                <div class="panel" style="opacity:0.42; pointer-events:none;">
+                <div class="panel" style="grid-column: 1 / -1;">
                     <div class="panel-header"><i class="fas fa-map-marked-alt"></i> Route Tracker</div>
-                    <div class="panel-body" style="text-align:center; padding:24px 12px; color:var(--text-3);">
-                        <i class="fas fa-hammer" style="font-size:1.4rem; margin-bottom:10px; display:block;"></i>
-                        <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
-                    </div>
-                </div>
-                <div class="panel" style="opacity:0.42; pointer-events:none;">
-                    <div class="panel-header"><i class="fas fa-user-cog"></i> Account Settings</div>
-                    <div class="panel-body" style="text-align:center; padding:24px 12px; color:var(--text-3);">
-                        <i class="fas fa-hammer" style="font-size:1.4rem; margin-bottom:10px; display:block;"></i>
-                        <span style="font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase;">Coming Soon</span>
+                    <div class="panel-body">
+                        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;">
+                            <button class="btn-sm rt-filter-btn" id="rtBtnthisWeek" onclick="routeTrackerFilter('thisWeek')">This Week</button>
+                            <button class="btn-sm rt-filter-btn" id="rtBtnlastWeek" onclick="routeTrackerFilter('lastWeek')">Last Week</button>
+                            <button class="btn-sm rt-filter-btn" id="rtBtnlastQuarter" onclick="routeTrackerFilter('lastQuarter')">Last Quarter</button>
+                            <button class="btn-sm rt-filter-btn" id="rtBtnytd" onclick="routeTrackerFilter('ytd')">Year to Date</button>
+                            <button class="btn-sm rt-filter-btn" id="rtBtncustom" onclick="routeTrackerFilter('custom')">Custom</button>
+                        </div>
+                        <div id="rtCustomRow" style="display:none; grid-template-columns:1fr 1fr auto; gap:8px; margin-bottom:14px; align-items:center;">
+                            <input type="text" id="routeStartDate" placeholder="Start date">
+                            <input type="text" id="routeEndDate" placeholder="End date">
+                            <button class="apply-btn" onclick="applyRouteCustomFilter()"><i class="fas fa-arrow-right"></i></button>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px;">
+                            <div class="chip"><div class="chip-label">Total Miles</div><div class="chip-val" id="rtTotalMiles">—</div></div>
+                            <div class="chip"><div class="chip-label">Entries</div><div class="chip-val" id="rtEntries">—</div></div>
+                            <div class="chip"><div class="chip-label">Avg Trip</div><div class="chip-val" id="rtAvgTrip">—</div></div>
+                            <div class="chip"><div class="chip-label">Longest</div><div class="chip-val" id="rtLongest">—</div></div>
+                            <div class="chip"><div class="chip-label">Peak Day</div><div class="chip-val" id="rtPeakDay">—</div></div>
+                        </div>
                     </div>
                 </div>
             </div>

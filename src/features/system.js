@@ -251,22 +251,43 @@ export function refreshCostAnalytics() {
         return;
     }
 
-    // Typical purchase time window — bucket $createdAt by hour, find peak 2-hr window
-    const hourBuckets = new Array(24).fill(0);
+    // Most frequent cluster of buy time — exact HH:MM, gap-based clustering
+    const timesOfDay = [];
     records.forEach(r => {
-        if (r.$createdAt) {
-            try { hourBuckets[new Date(r.$createdAt).getHours()]++; } catch (e) {}
+        if (r.time) {
+            const [h, m] = r.time.split(':').map(Number);
+            if (!isNaN(h) && !isNaN(m)) timesOfDay.push(h * 60 + m);
+        } else if (r.$createdAt) {
+            try {
+                const d = new Date(r.$createdAt);
+                timesOfDay.push(d.getHours() * 60 + d.getMinutes());
+            } catch (e) {}
         }
     });
-    const timed = records.filter(r => r.$createdAt).length;
-    if (timed > 0) {
-        let bestStart = 0, bestCount = 0;
-        for (let h = 0; h < 24; h++) {
-            const count = hourBuckets[h] + hourBuckets[(h + 1) % 24];
-            if (count > bestCount) { bestCount = count; bestStart = h; }
+    if (timesOfDay.length > 0) {
+        timesOfDay.sort((a, b) => a - b);
+        // Split into clusters wherever consecutive times are > 60 min apart
+        const GAP = 60;
+        const clusters = [];
+        let cur = [timesOfDay[0]];
+        for (let i = 1; i < timesOfDay.length; i++) {
+            if (timesOfDay[i] - timesOfDay[i - 1] > GAP) { clusters.push(cur); cur = []; }
+            cur.push(timesOfDay[i]);
         }
-        const fmtH = h => { const a = h < 12 ? 'am' : 'pm'; return `${h % 12 || 12}${a}`; };
-        el('caPeakBuyTime').textContent = `${fmtH(bestStart)}–${fmtH((bestStart + 2) % 24)}`;
+        clusters.push(cur);
+        const best = clusters.reduce((a, b) => b.length > a.length ? b : a);
+        const fmtT = mins => {
+            const h = Math.floor(mins / 60), m = mins % 60;
+            return { str: `${String(h % 12 || 12).padStart(2, '0')}:${String(m).padStart(2, '0')}`, period: h < 12 ? 'AM' : 'PM' };
+        };
+        const t0 = fmtT(best[0]), t1 = fmtT(best[best.length - 1]);
+        const count = best.length;
+        const range = best.length === 1
+            ? `${t0.str} ${t0.period}`
+            : t0.period === t1.period
+                ? `${t0.str}–${t1.str} ${t0.period}`
+                : `${t0.str} ${t0.period}–${t1.str} ${t1.period}`;
+        el('caPeakBuyTime').innerHTML = `${range}<br><span style="font-size:0.62rem;font-weight:500;color:var(--text-3);letter-spacing:0.5px;">${count} purchase${count !== 1 ? 's' : ''}</span>`;
     } else {
         el('caPeakBuyTime').textContent = '—';
     }

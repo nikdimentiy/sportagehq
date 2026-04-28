@@ -1055,6 +1055,10 @@
                             <input type="date" id="fuelDate" required>
                         </div>
                         <div class="field">
+                            <div class="field-label">Time</div>
+                            <input type="time" id="fuelTime">
+                        </div>
+                        <div class="field">
                             <div class="field-label">Station</div>
                             <input type="text" id="fuelStation" required placeholder="SHELL, CHEVRON...">
                         </div>
@@ -1120,7 +1124,7 @@
                     <div class="table-wrap">
                         <table>
                             <thead><tr>
-                                <th>Date</th><th>Station</th><th>Grade</th>
+                                <th>Date</th><th>Time</th><th>Station</th><th>Grade</th>
                                 <th>Gal</th><th>$/Gal</th><th>Total</th>
                                 <th>Trip</th><th>MPG</th><th>$/Mi</th><th>Odo</th><th></th>
                             </tr></thead>
@@ -1429,7 +1433,7 @@
                     <div class="panel-body">
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">
                             <div class="chip">
-                                <div class="chip-label">Typical Buy Time</div>
+                                <div class="chip-label">Top Buy Time</div>
                                 <div class="chip-val" id="caPeakBuyTime">—</div>
                             </div>
                             <div class="chip">

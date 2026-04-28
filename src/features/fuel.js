@@ -12,6 +12,7 @@ export async function loadFuel() {
 }
 
 document.getElementById('fuelDate').value = getPSTDate();
+document.getElementById('fuelTime').value = new Date().toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hour12: false });
 
 document.getElementById('fuelForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -22,6 +23,7 @@ document.getElementById('fuelForm').addEventListener('submit', async function(e)
 
     const record = {
         date: document.getElementById('fuelDate').value,
+        time: document.getElementById('fuelTime').value || new Date().toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hour12: false }),
         station: document.getElementById('fuelStation').value.trim(),
         type: document.getElementById('fuelType').value,
         pricePerGallon: ppg,
@@ -39,6 +41,7 @@ document.getElementById('fuelForm').addEventListener('submit', async function(e)
         document.getElementById('fuelReport').style.display = 'none';
         this.reset();
         document.getElementById('fuelDate').value = getPSTDate();
+        document.getElementById('fuelTime').value = new Date().toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hour12: false });
         toast('Fuel stop logged');
     } catch (err) {
         console.error("Error saving fuel record:", err);
@@ -60,6 +63,7 @@ export function renderFuelTable() {
         tr.dataset.id = r.$id;
         tr.innerHTML = `
             <td class="td-highlight">${formatDisplayDate(r.date)}</td>
+            <td style="color:var(--text-3);font-size:0.75rem">${r.time || '—'}</td>
             <td style="text-transform:capitalize">${esc(r.station)}</td>
             <td>${esc(r.type)}</td>
             <td>${r.gallons ? r.gallons.toFixed(3) : '-'}</td>
@@ -97,6 +101,7 @@ export function editFuelRow(docId) {
         `<input type="${type}" data-field="${field}" value="${esc(val)}" class="row-edit-input" ${extra}>`;
     tr.innerHTML = `
         <td>${inp('date', 'date', r.date || '')}</td>
+        <td>${inp('time', 'time', r.time || '')}</td>
         <td>${inp('text', 'station', r.station || '')}</td>
         <td><select data-field="type" class="row-edit-input">
             <option value="Regular"${r.type === 'Regular' ? ' selected' : ''}>Regular</option>
@@ -122,6 +127,7 @@ export async function saveFuelRow(docId) {
     if (!tr) return;
     const get = field => tr.querySelector(`[data-field="${field}"]`).value;
     const date = get('date');
+    const time = get('time');
     const station = get('station').trim().toUpperCase();
     const type = get('type');
     const gallons = parseFloat(get('gallons'));
@@ -136,7 +142,7 @@ export async function saveFuelRow(docId) {
     const mpg = (gallons > 0 && miles > 0) ? parseFloat((miles / gallons).toFixed(1)) : 0;
     const costPerMile = (miles > 0 && totalCost > 0) ? parseFloat((totalCost / miles).toFixed(3)) : 0;
     try {
-        await window.updateFuelRecord(docId, { date, station, type, gallons, pricePerGallon: ppg, milesDriven: miles, mileage: odo, totalCost, mpg, costPerMile });
+        await window.updateFuelRecord(docId, { date, time, station, type, gallons, pricePerGallon: ppg, milesDriven: miles, mileage: odo, totalCost, mpg, costPerMile });
         await loadFuel();
         toast('Fuel record updated');
     } catch (err) {

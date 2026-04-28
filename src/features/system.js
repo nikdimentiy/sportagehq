@@ -235,54 +235,47 @@ export async function wipeAllData() {
     }
 }
 
-// ── ISO week helpers ──────────────────────────────────────────────────────────
-
-function isoWeekKey(dateStr) {
-    const d = new Date(dateStr + 'T00:00:00');
-    const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    dt.setUTCDate(dt.getUTCDate() + 4 - (dt.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
-    const week = Math.ceil((((dt - yearStart) / 86400000) + 1) / 7);
-    return `${dt.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
-}
-
-function isoWeekLabel(wkStr) {
-    const [yr, wn] = wkStr.split('-W');
-    const jan4 = new Date(Date.UTC(+yr, 0, 4));
-    const mon = new Date(jan4);
-    mon.setUTCDate(jan4.getUTCDate() - (jan4.getUTCDay() || 7) + 1 + (+wn - 1) * 7);
-    const sun = new Date(mon); sun.setUTCDate(mon.getUTCDate() + 6);
-    const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-    return `${fmt(mon)} – ${fmt(sun)}`;
-}
-
 // ── Cost Analytics ────────────────────────────────────────────────────────────
 
 export function refreshCostAnalytics() {
     const el = id => document.getElementById(id);
-    if (!el('caCostPerDay')) return;
+    if (!el('caPeakBuyTime')) return;
 
     const records = state.fuelRecords;
     const noData = '<span style="color:var(--text-3);font-size:0.8rem;">No data yet</span>';
 
     if (!records.length) {
-        ['caCostPerDay', 'caCostPerMile', 'caVolWeightedPrice', 'caFuelPriceTrend']
+        ['caPeakBuyTime', 'caCostPerMile', 'caVolWeightedPrice', 'caFuelPriceTrend']
             .forEach(id => { const e = el(id); if (e) e.textContent = '—'; });
-        if (el('caWeeklyTable')) el('caWeeklyTable').innerHTML = noData;
         if (el('caMonthlyTable')) el('caMonthlyTable').innerHTML = noData;
         return;
+    }
+
+    // Typical purchase time window — bucket $createdAt by hour, find peak 2-hr window
+    const hourBuckets = new Array(24).fill(0);
+    records.forEach(r => {
+        if (r.$createdAt) {
+            try { hourBuckets[new Date(r.$createdAt).getHours()]++; } catch (e) {}
+        }
+    });
+    const timed = records.filter(r => r.$createdAt).length;
+    if (timed > 0) {
+        let bestStart = 0, bestCount = 0;
+        for (let h = 0; h < 24; h++) {
+            const count = hourBuckets[h] + hourBuckets[(h + 1) % 24];
+            if (count > bestCount) { bestCount = count; bestStart = h; }
+        }
+        const fmtH = h => { const a = h < 12 ? 'am' : 'pm'; return `${h % 12 || 12}${a}`; };
+        el('caPeakBuyTime').textContent = `${fmtH(bestStart)}–${fmtH((bestStart + 2) % 24)}`;
+    } else {
+        el('caPeakBuyTime').textContent = '—';
     }
 
     const totalSpend = records.reduce((s, r) => s + (r.totalCost || 0), 0);
     const totalGallons = records.reduce((s, r) => s + (r.gallons || 0), 0);
     const totalMiles = records.reduce((s, r) => s + (r.milesDriven || 0), 0);
 
-    // Avg cost per unique trip day
-    const uniqueDays = new Set(records.map(r => r.date).filter(Boolean));
-    el('caCostPerDay').textContent = uniqueDays.size > 0
-        ? '$' + (totalSpend / uniqueDays.size).toFixed(2) : '—';
-
-    // Cost per mile (volume-weighted across all records)
+    // Cost per mile
     el('caCostPerMile').textContent = totalMiles > 0
         ? '$' + (totalSpend / totalMiles).toFixed(3) : '—';
 
@@ -290,44 +283,30 @@ export function refreshCostAnalytics() {
     el('caVolWeightedPrice').textContent = totalGallons > 0
         ? '$' + (totalSpend / totalGallons).toFixed(3) : '—';
 
-    // Fuel price trend: earliest N fills vs latest N fills
-    const sorted = [...records].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-    const priced = sorted.filter(r => r.pricePerGallon > 0);
-    if (priced.length >= 2) {
-        const n = Math.min(5, Math.floor(priced.length / 2));
-        const earlyAvg = priced.slice(0, n).reduce((s, r) => s + r.pricePerGallon, 0) / n;
-        const recentAvg = priced.slice(-n).reduce((s, r) => s + r.pricePerGallon, 0) / n;
-        const delta = recentAvg - earlyAvg;
-        const pct = (delta / earlyAvg * 100).toFixed(1);
+    // Fuel price trend: current month avg PPG vs previous month avg PPG
+    const now = new Date();
+    const curMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+    const curRecs = records.filter(r => r.date?.startsWith(curMonth) && r.pricePerGallon > 0);
+    const prevRecs = records.filter(r => r.date?.startsWith(prevMonth) && r.pricePerGallon > 0);
+    if (curRecs.length && prevRecs.length) {
+        const curAvg = curRecs.reduce((s, r) => s + r.pricePerGallon, 0) / curRecs.length;
+        const prevAvg = prevRecs.reduce((s, r) => s + r.pricePerGallon, 0) / prevRecs.length;
+        const delta = curAvg - prevAvg;
+        const pct = (delta / prevAvg * 100).toFixed(1);
         const sign = delta >= 0 ? '+' : '';
         const color = delta > 0 ? 'var(--rose)' : 'var(--emerald)';
-        el('caFuelPriceTrend').innerHTML =
-            `<span style="color:${color}">${sign}${pct}%</span>`;
+        el('caFuelPriceTrend').innerHTML = `<span style="color:${color}">${sign}${pct}%</span>`;
     } else {
         el('caFuelPriceTrend').textContent = '—';
     }
 
-    // Weekly fuel spend (last 12 weeks)
-    const weeks = {};
-    records.forEach(r => {
-        if (r.date && r.totalCost) {
-            const wk = isoWeekKey(r.date);
-            weeks[wk] = (weeks[wk] || 0) + r.totalCost;
-        }
-    });
-    const wkKeys = Object.keys(weeks).sort().reverse().slice(0, 12);
-    el('caWeeklyTable').innerHTML = wkKeys.length
-        ? wkKeys.map(w =>
-            `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.82rem">
-                <span style="color:var(--text-2)">${isoWeekLabel(w)}</span>
-                <span style="color:var(--cyan);font-weight:600">$${weeks[w].toFixed(2)}</span>
-            </div>`).join('')
-        : noData;
-
-    // Monthly fuel spend (all months)
+    // Monthly fuel spend — current year only (from Jan 1)
+    const yearPrefix = String(now.getFullYear());
     const months = {};
     records.forEach(r => {
-        if (r.date && r.totalCost) {
+        if (r.date && r.totalCost && r.date.startsWith(yearPrefix)) {
             const m = r.date.substring(0, 7);
             months[m] = (months[m] || 0) + r.totalCost;
         }

@@ -21,7 +21,7 @@ import {
 } from './features/maintenance.js';
 import {
     exportMaintJSON, exportFullBackup, updateVaultCounts, updateSystemCounts, wipeAllData, updateSmartAlerts, refreshCostAnalytics,
-    routeTrackerFilter, applyRouteCustomFilter, refreshRouteTracker
+    routeTrackerFilter, applyRouteCustomFilter, refreshRouteTracker, initNuclearToggle, toggleNuclearOption
 } from './features/system.js';
 
 // ── RESTORE TOGGLE STATES ──
@@ -39,7 +39,7 @@ function switchTab(tabName) {
     if (bottomBtn) bottomBtn.classList.add('active');
     document.getElementById('page-' + tabName)?.classList.add('active');
     if (tabName === 'overview') refreshOverview();
-    if (tabName === 'system') { updateSystemCounts(); updateSmartAlerts(); refreshCostAnalytics(); refreshRouteTracker(); }
+    if (tabName === 'system') { initNuclearToggle(); updateSystemCounts(); updateSmartAlerts(); refreshCostAnalytics(); refreshRouteTracker(); }
 }
 
 document.getElementById('navTabs').addEventListener('click', e => {
@@ -133,3 +133,4 @@ window.updateSmartAlerts    = updateSmartAlerts;
 window.refreshCostAnalytics = refreshCostAnalytics;
 window.routeTrackerFilter   = routeTrackerFilter;
 window.applyRouteCustomFilter = applyRouteCustomFilter;
+window.toggleNuclearOption  = toggleNuclearOption;

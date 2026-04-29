@@ -1331,12 +1331,18 @@
 <!-- ════════════════════════════════════════════ -->
 <div id="page-system" class="tab-page">
 
-    <div class="sec-label">System — Administration &amp; Future Modules</div>
+    <div class="sec-label" style="display:flex; justify-content:space-between; align-items:center;">
+        System — Administration &amp; Future Modules
+        <label style="display:flex; align-items:center; gap:7px; cursor:pointer; font-size:0.72rem; color:var(--text-2); font-weight:400; letter-spacing:0.5px; text-transform:none;">
+            <input type="checkbox" id="nuclearOptionToggle" onchange="toggleNuclearOption(this.checked)" style="accent-color:var(--rose); cursor:pointer; width:13px; height:13px;">
+            Nuclear Option
+        </label>
+    </div>
 
-    <div class="sys-layout" style="display:grid; grid-template-columns:320px 1fr; gap:18px; align-items:start; margin-bottom:28px;">
+    <div id="sysLayout" class="sys-layout" style="display:grid; grid-template-columns:320px 1fr; gap:18px; align-items:start; margin-bottom:28px;">
 
         <!-- LEFT: Wipe Widget -->
-        <div class="panel">
+        <div class="panel" id="nuclearOptionPanel">
             <div class="panel-header" style="background:rgba(255,61,113,0.05); border-bottom-color:rgba(255,61,113,0.18);">
                 <i class="fas fa-radiation-alt" style="color:var(--rose)!important"></i>
                 <span style="color:var(--rose)">Nuclear Option</span>
@@ -1450,12 +1456,11 @@
                             <input type="text" id="routeEndDate" placeholder="End date">
                             <button class="apply-btn" onclick="applyRouteCustomFilter()"><i class="fas fa-arrow-right"></i></button>
                         </div>
-                        <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px;">
+                        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
                             <div class="chip"><div class="chip-label">Total Miles</div><div class="chip-val" id="rtTotalMiles">—</div></div>
                             <div class="chip"><div class="chip-label">Entries</div><div class="chip-val" id="rtEntries">—</div></div>
                             <div class="chip"><div class="chip-label">Avg Trip</div><div class="chip-val" id="rtAvgTrip">—</div></div>
                             <div class="chip"><div class="chip-label">Longest</div><div class="chip-val" id="rtLongest">—</div></div>
-                            <div class="chip"><div class="chip-label">Peak Day</div><div class="chip-val" id="rtPeakDay">—</div></div>
                         </div>
                     </div>
                 </div>

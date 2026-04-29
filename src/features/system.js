@@ -8,6 +8,25 @@ import { refreshOverview } from './overview.js';
 const FUEL_KEY  = 'sportageSmoothRecords';
 const MILE_KEY  = 'mileageData';
 const MAINT_KEY = 'sportageMaintenanceData';
+const NUCLEAR_HIDDEN_KEY = 'nuclearOptionHidden';
+
+export function initNuclearToggle() {
+    const hidden = localStorage.getItem(NUCLEAR_HIDDEN_KEY) === 'true';
+    const toggle = document.getElementById('nuclearOptionToggle');
+    const panel  = document.getElementById('nuclearOptionPanel');
+    const layout = document.getElementById('sysLayout');
+    if (toggle) toggle.checked = !hidden;
+    if (panel)  panel.style.display = hidden ? 'none' : '';
+    if (layout) layout.style.gridTemplateColumns = hidden ? '1fr' : '320px 1fr';
+}
+
+export function toggleNuclearOption(show) {
+    localStorage.setItem(NUCLEAR_HIDDEN_KEY, show ? 'false' : 'true');
+    const panel  = document.getElementById('nuclearOptionPanel');
+    const layout = document.getElementById('sysLayout');
+    if (panel)  panel.style.display = show ? '' : 'none';
+    if (layout) layout.style.gridTemplateColumns = show ? '320px 1fr' : '1fr';
+}
 
 export function downloadBlob(content, filename, type) {
     const blob = new Blob([content], { type });
@@ -243,6 +262,7 @@ let _rtPeriod = 'thisWeek';
 document.addEventListener('DOMContentLoaded', () => {
     fpRouteStart = flatpickr('#routeStartDate', { dateFormat: 'Y-m-d' });
     fpRouteEnd   = flatpickr('#routeEndDate',   { dateFormat: 'Y-m-d' });
+    initNuclearToggle();
 });
 
 export function routeTrackerFilter(period) {
@@ -296,7 +316,7 @@ function getRouteData(start, end) {
 function renderRouteStats(filtered) {
     const el = id => document.getElementById(id);
     if (!filtered.length) {
-        ['rtTotalMiles','rtEntries','rtAvgTrip','rtLongest','rtPeakDay'].forEach(id => el(id).textContent = '—');
+        ['rtTotalMiles','rtEntries','rtAvgTrip','rtLongest'].forEach(id => el(id).textContent = '—');
         return;
     }
     const calc = recalcMileage(filtered);
@@ -306,11 +326,6 @@ function renderRouteStats(filtered) {
     el('rtEntries').textContent = calc.length;
     el('rtAvgTrip').textContent = (total / calc.length).toFixed(1) + ' mi';
     el('rtLongest').textContent = Math.max(...trips).toLocaleString() + ' mi';
-    const dm = {0:0,1:0,2:0,3:0,4:0,5:0,6:0};
-    const dn = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    calc.forEach(r => { dm[new Date(r.dateTime).getDay()] += r.mileageDifference; });
-    let bi=-1, mx=-1; for (const d in dm) { if (dm[d] > mx) { mx=dm[d]; bi=d; } }
-    el('rtPeakDay').textContent = mx > 0 ? dn[bi] : '—';
 }
 
 // ── Cost Analytics ────────────────────────────────────────────────────────────

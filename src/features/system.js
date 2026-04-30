@@ -124,6 +124,80 @@ function calcWMADailyRate(mileageData, windowDays) {
     return wSum > 0 ? wMiles / wSum : 0;
 }
 
+function predictNextFuelDate() {
+    const fuel = state.fuelRecords;
+    const mileage = state.mileageData;
+
+    if (!fuel || fuel.length < 2 || !mileage || mileage.length < 1) return null;
+
+    // Only records with a valid trip distance
+    const fuelSorted = [...fuel]
+        .filter(r => r.milesDriven > 0 && r.mileage > 0)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    if (fuelSorted.length < 2) return null;
+
+    const lastFuel = fuelSorted[fuelSorted.length - 1];
+    const lastFuelMileage = lastFuel.mileage;
+    const lastFuelDateTime = lastFuel.date + ' ' + (lastFuel.time || '12:00');
+
+    // Median milesDriven of last 5 records = typical tank range
+    const recent = fuelSorted.slice(-5).map(r => r.milesDriven).filter(v => v > 5);
+    if (!recent.length) return null;
+    const sorted5 = [...recent].sort((a, b) => a - b);
+    const typicalTankMiles = sorted5[Math.floor(sorted5.length / 2)];
+
+    // Latest odometer reading
+    const mileSorted = [...mileage].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+    const latestMile = mileSorted[mileSorted.length - 1];
+    const milesSinceLastFill = Math.max(0, latestMile.currentMileage - lastFuelMileage);
+    const remainingMiles = typicalTankMiles - milesSinceLastFill;
+
+    // Average daily miles from mileage records logged after last fuel fill
+    const lastFuelTime = new Date(lastFuelDateTime);
+    const afterFuel = mileSorted.filter(r => new Date(r.dateTime) > lastFuelTime);
+
+    let avgDailyMiles = 0;
+    if (afterFuel.length >= 1) {
+        // Anchor chain at the last fuel fill point, then accumulate per-day increments
+        const chain = [
+            { dateTime: lastFuelDateTime, currentMileage: lastFuelMileage },
+            ...afterFuel
+        ];
+        const dailyMap = {};
+        for (let i = 1; i < chain.length; i++) {
+            const diff = Math.max(0, chain[i].currentMileage - chain[i - 1].currentMileage);
+            const day = chain[i].dateTime.slice(0, 10);
+            dailyMap[day] = (dailyMap[day] || 0) + diff;
+        }
+        const vals = Object.values(dailyMap).filter(v => v > 0);
+        if (vals.length) avgDailyMiles = vals.reduce((a, b) => a + b, 0) / vals.length;
+    }
+
+    // Fallback to WMA when no useful post-fill mileage data
+    if (avgDailyMiles < 0.1) {
+        avgDailyMiles = calcWMADailyRate(mileage, 60);
+        if (avgDailyMiles < 0.1) avgDailyMiles = calcWMADailyRate(mileage, 30);
+    }
+
+    if (avgDailyMiles < 0.1) return null;
+
+    const etaDays = Math.max(0, Math.round(remainingMiles / avgDailyMiles));
+
+    // Predicted date anchored to the latest mileage record timestamp
+    const predicted = new Date(latestMile.dateTime);
+    predicted.setDate(predicted.getDate() + etaDays);
+
+    return {
+        date: predicted,
+        etaDays,
+        typicalTankMiles,
+        milesSinceLastFill,
+        remainingMiles: Math.max(0, remainingMiles),
+        avgDailyMiles
+    };
+}
+
 export function updateSmartAlerts() {
     const el = document.getElementById('smartAlertsBody');
     if (!el) return;
@@ -131,54 +205,85 @@ export function updateSmartAlerts() {
     const data = state.mileageData;
     const INTERVAL = 8000;
 
+    // --- Maintenance section ---
+    let maintHTML = '';
     if (!data || data.length < 2) {
-        el.innerHTML = `<div style="text-align:center;padding:18px 12px;color:var(--text-3);">
-            <i class="fas fa-database" style="font-size:1.2rem;margin-bottom:8px;display:block;opacity:0.5;"></i>
-            <span style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;">Need more mileage data</span>
+        maintHTML = `<div style="text-align:center;padding:12px 8px;color:var(--text-3);">
+            <i class="fas fa-database" style="font-size:1rem;margin-bottom:6px;display:block;opacity:0.5;"></i>
+            <span style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;">Need more mileage data</span>
         </div>`;
-        return;
+    } else {
+        const sorted = [...data].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+        const currentOdo = sorted[sorted.length - 1].currentMileage;
+        const nextMilestone = Math.ceil((currentOdo + 1) / INTERVAL) * INTERVAL;
+        const milesRemaining = nextMilestone - currentOdo;
+
+        let rate = calcWMADailyRate(data, 60);
+        let windowUsed = 60;
+        if (rate < 0.1) { rate = calcWMADailyRate(data, 30); windowUsed = 30; }
+
+        if (rate < 0.1) {
+            maintHTML = `<div style="text-align:center;padding:12px 8px;color:var(--text-3);">
+                <i class="fas fa-exclamation-triangle" style="font-size:1rem;margin-bottom:6px;display:block;"></i>
+                <span style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;">Insufficient recent data</span>
+            </div>`;
+        } else {
+            const daysUntil = Math.round(milesRemaining / rate);
+            const predicted = new Date();
+            predicted.setDate(predicted.getDate() + daysUntil);
+            const dateStr = predicted.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            let urgColor = 'var(--emerald)', urgLabel = 'On Track';
+            if (daysUntil < 14) { urgColor = 'var(--rose)'; urgLabel = 'Soon!'; }
+            else if (daysUntil < 30) { urgColor = 'var(--amber)'; urgLabel = 'Upcoming'; }
+
+            maintHTML = `
+                <div style="font-size:0.55rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-3);margin-bottom:3px;">
+                    <i class="fas fa-wrench" style="margin-right:4px;opacity:0.6;"></i>Next Maintenance · ${nextMilestone.toLocaleString()} mi
+                </div>
+                <div style="font-size:1.2rem;font-weight:700;color:${urgColor};font-family:'JetBrains Mono',monospace;line-height:1.2;">${dateStr}</div>
+                <div style="font-size:0.68rem;color:var(--text-2);margin-top:2px;margin-bottom:8px;">in ~${daysUntil} days &nbsp;<span style="color:${urgColor};font-weight:600;">${urgLabel}</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+                    <div class="chip"><div class="chip-label">Miles Left</div><div class="chip-val">${milesRemaining.toLocaleString()} mi</div></div>
+                    <div class="chip"><div class="chip-label">WMA Rate</div><div class="chip-val">${rate.toFixed(1)} mi/d · ${windowUsed}d</div></div>
+                </div>`;
+        }
     }
 
-    const sorted = [...data].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
-    const currentOdo = sorted[sorted.length - 1].currentMileage;
-
-    const nextMilestone = Math.ceil((currentOdo + 1) / INTERVAL) * INTERVAL;
-    const milesRemaining = nextMilestone - currentOdo;
-
-    // Try 60-day WMA first, fall back to 30-day
-    let rate = calcWMADailyRate(data, 60);
-    let windowUsed = 60;
-    if (rate < 0.1) { rate = calcWMADailyRate(data, 30); windowUsed = 30; }
-
-    if (rate < 0.1) {
-        el.innerHTML = `<div style="text-align:center;padding:18px 12px;color:var(--text-3);">
-            <i class="fas fa-exclamation-triangle" style="font-size:1.2rem;margin-bottom:8px;display:block;"></i>
-            <span style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;">Insufficient recent data</span>
+    // --- Fuel prediction section ---
+    const fuelPred = predictNextFuelDate();
+    let fuelHTML = '';
+    if (!fuelPred) {
+        fuelHTML = `<div style="text-align:center;padding:12px 8px;color:var(--text-3);">
+            <i class="fas fa-gas-pump" style="font-size:1rem;margin-bottom:6px;display:block;opacity:0.5;"></i>
+            <span style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;">Need fuel history</span>
         </div>`;
-        return;
+    } else {
+        const { date, etaDays, typicalTankMiles, milesSinceLastFill, remainingMiles, avgDailyMiles } = fuelPred;
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        let urgColor = 'var(--emerald)', urgLabel = 'On Track';
+        if (etaDays <= 0) { urgColor = 'var(--rose)'; urgLabel = 'Refuel Now!'; }
+        else if (etaDays < 3) { urgColor = 'var(--rose)'; urgLabel = 'Very Soon!'; }
+        else if (etaDays < 7) { urgColor = 'var(--amber)'; urgLabel = 'This Week'; }
+
+        fuelHTML = `
+            <div style="font-size:0.55rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-3);margin-bottom:3px;">
+                <i class="fas fa-gas-pump" style="margin-right:4px;opacity:0.6;"></i>Next Fuel Stop
+            </div>
+            <div style="font-size:1.2rem;font-weight:700;color:${urgColor};font-family:'JetBrains Mono',monospace;line-height:1.2;">${etaDays <= 0 ? 'Now' : dateStr}</div>
+            <div style="font-size:0.68rem;color:var(--text-2);margin-top:2px;margin-bottom:8px;">${etaDays <= 0 ? 'Past typical range' : 'in ~' + etaDays + ' days'} &nbsp;<span style="color:${urgColor};font-weight:600;">${urgLabel}</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+                <div class="chip"><div class="chip-label">Tank Left</div><div class="chip-val">~${Math.round(remainingMiles)} mi</div></div>
+                <div class="chip"><div class="chip-label">Avg Tank</div><div class="chip-val">${Math.round(typicalTankMiles)} mi</div></div>
+                <div class="chip"><div class="chip-label">Since Fill</div><div class="chip-val">${Math.round(milesSinceLastFill)} mi</div></div>
+                <div class="chip"><div class="chip-label">Daily Avg</div><div class="chip-val">${avgDailyMiles.toFixed(1)} mi/d</div></div>
+            </div>`;
     }
 
-    const daysUntil = Math.round(milesRemaining / rate);
-    const predicted = new Date();
-    predicted.setDate(predicted.getDate() + daysUntil);
-    const dateStr = predicted.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
-    let urgColor = 'var(--emerald)', urgLabel = 'On Track';
-    if (daysUntil < 14) { urgColor = 'var(--rose)'; urgLabel = 'Soon!'; }
-    else if (daysUntil < 30) { urgColor = 'var(--amber)'; urgLabel = 'Upcoming'; }
-
-    el.innerHTML = `
-        <div style="margin-bottom:12px;">
-            <div style="font-size:0.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-3);margin-bottom:4px;">Next Maintenance at ${nextMilestone.toLocaleString()} mi</div>
-            <div style="font-size:1.35rem;font-weight:700;color:${urgColor};font-family:'JetBrains Mono',monospace;line-height:1.2;">${dateStr}</div>
-            <div style="font-size:0.72rem;color:var(--text-2);margin-top:3px;">in ~${daysUntil} days &nbsp;<span style="color:${urgColor};font-weight:600;">${urgLabel}</span></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-            <div class="chip"><div class="chip-label">Miles Left</div><div class="chip-val">${milesRemaining.toLocaleString()} mi</div></div>
-            <div class="chip"><div class="chip-label">Current Odo</div><div class="chip-val">${currentOdo.toLocaleString()} mi</div></div>
-            <div class="chip"><div class="chip-label">WMA Rate</div><div class="chip-val">${rate.toFixed(1)} mi/day</div></div>
-            <div class="chip"><div class="chip-label">Window</div><div class="chip-val">Last ${windowUsed}d</div></div>
-        </div>`;
+    el.innerHTML = `${maintHTML}
+        <div style="border-top:1px solid var(--border-1);margin:10px 0;"></div>
+        ${fuelHTML}`;
 }
 
 export function updateVaultCounts() {

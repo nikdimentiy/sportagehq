@@ -1219,7 +1219,7 @@
 
     <div class="sec-label">Maintenance — Service Log</div>
 
-    <div class="cockpit-grid">
+    <div class="cockpit-grid" id="maintCockpit">
         <!-- LEFT: Input -->
         <div class="panel-col-input">
             <div class="panel">
@@ -1299,6 +1299,9 @@
 
             <div class="panel">
                 <div class="panel-header"><i class="fas fa-list-alt"></i> Service History
+                    <button class="panel-toggle" onclick="toggleMaintInput()" id="maintToggleBtn">
+                        <i class="fas fa-columns"></i> <span id="maintToggleLabel">Hide Input</span>
+                    </button>
                 </div>
                 <div class="panel-body">
                     <div class="btn-row">

@@ -17,7 +17,7 @@ import {
 import {
     loadMaint, renderMaintTable, editMaintRow, saveMaintRow,
     addMaintRecord, deleteMaintRecord, purgeMaintData,
-    updateMaintSummary
+    updateMaintSummary, toggleMaintInput, restoreMaintInputState
 } from './features/maintenance.js';
 import {
     exportMaintJSON, exportFullBackup, updateVaultCounts, updateSystemCounts, wipeAllData, updateSmartAlerts, refreshCostAnalytics,
@@ -27,6 +27,7 @@ import {
 // ── RESTORE TOGGLE STATES ──
 restoreFuelInputState();
 restoreMileageInputState();
+restoreMaintInputState();
 
 // ── TABS ──
 function switchTab(tabName) {
@@ -127,6 +128,7 @@ window.toggleMileageInput   = toggleMileageInput;
 window.addMaintRecord       = addMaintRecord;
 window.deleteMaintRecord    = deleteMaintRecord;
 window.purgeMaintData       = purgeMaintData;
+window.toggleMaintInput     = toggleMaintInput;
 window.wipeAllData          = wipeAllData;
 window.updateSystemCounts   = updateSystemCounts;
 window.updateSmartAlerts    = updateSmartAlerts;

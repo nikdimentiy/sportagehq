@@ -150,6 +150,19 @@ export function updateMaintSummary() {
     document.getElementById('maintLastOdo').textContent = withOdo.length ? withOdo[0].odo.toLocaleString() + ' mi' : '—';
 }
 
+export function toggleMaintInput() {
+    const hidden = document.getElementById('maintCockpit').classList.toggle('input-hidden');
+    document.getElementById('maintToggleLabel').textContent = hidden ? 'Show Input' : 'Hide Input';
+    localStorage.setItem('sportagehq_maint_input_hidden', hidden ? '1' : '0');
+}
+
+export function restoreMaintInputState() {
+    if (localStorage.getItem('sportagehq_maint_input_hidden') === '1') {
+        document.getElementById('maintCockpit').classList.add('input-hidden');
+        document.getElementById('maintToggleLabel').textContent = 'Show Input';
+    }
+}
+
 export async function purgeMaintData() {
     if (!confirm('Delete all maintenance records? This cannot be undone.')) return;
     try {

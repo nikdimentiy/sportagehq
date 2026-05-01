@@ -72,7 +72,7 @@ async function initAppData() {
 
 // ── KEYBOARD SHORTCUTS ──
 document.addEventListener('keydown', e => {
-    if (e.altKey && !e.ctrlKey && !e.metaKey) {
+    if (e.ctrlKey && !e.altKey && !e.metaKey) {
         const tabMap = { '1': 'overview', '2': 'fuel', '3': 'mileage', '4': 'maintenance', '5': 'system' };
         const tab = tabMap[e.key];
         if (tab) {

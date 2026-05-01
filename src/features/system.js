@@ -411,26 +411,104 @@ export function applyRouteCustomFilter() {
     renderRouteStats(getRouteData(s, e));
 }
 
-export function refreshRouteTracker() { routeTrackerFilter(_rtPeriod); }
+export function refreshRouteTracker() {
+    renderRouteAnalytics();
+    routeTrackerFilter(_rtPeriod);
+}
 
 function getRouteData(start, end) {
     const s = new Date(start).setHours(0,0,0,0), e = new Date(end).setHours(23,59,59,999);
     return state.mileageData.filter(r => { const d = new Date(r.dateTime); return d >= s && d <= e; });
 }
 
+function calcPeriodMiles(start, end) {
+    const filtered = getRouteData(start, end);
+    if (!filtered.length) return 0;
+    return recalcMileage(filtered).reduce((s, r) => s + r.mileageDifference, 0);
+}
+
+function renderRouteAnalytics() {
+    const el = id => document.getElementById(id);
+    if (!el('rtWeekCurrent')) return;
+
+    const now = new Date();
+    const dow = now.getDay();
+
+    const curWeekStart = new Date(now);
+    curWeekStart.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+
+    const lastWeekStart = new Date(curWeekStart);
+    lastWeekStart.setDate(curWeekStart.getDate() - 7);
+    const lastWeekEnd = new Date(curWeekStart);
+    lastWeekEnd.setDate(curWeekStart.getDate() - 1);
+
+    const curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    const curWeekMi  = calcPeriodMiles(curWeekStart,  now);
+    const prevWeekMi = calcPeriodMiles(lastWeekStart, lastWeekEnd);
+    const curMonMi   = calcPeriodMiles(curMonthStart, now);
+    const prevMonMi  = calcPeriodMiles(lastMonthStart, lastMonthEnd);
+
+    const fmtMi = v => v > 0 ? v.toFixed(1) + ' mi' : '0 mi';
+    const fmtPct = (cur, prev) => {
+        if (prev === 0) return '<span style="color:var(--text-3)">—</span>';
+        const delta = (cur - prev) / prev * 100;
+        const sign = delta >= 0 ? '+' : '';
+        const color = delta >= 0 ? 'var(--emerald)' : 'var(--rose)';
+        return `<span style="color:${color};font-weight:700;">${sign}${delta.toFixed(1)}%</span>`;
+    };
+
+    el('rtWeekCurrent').textContent = fmtMi(curWeekMi);
+    el('rtWeekPrev').textContent    = fmtMi(prevWeekMi);
+    el('rtWeekChange').innerHTML    = fmtPct(curWeekMi, prevWeekMi);
+    el('rtMonthCurrent').textContent = fmtMi(curMonMi);
+    el('rtMonthPrev').textContent    = fmtMi(prevMonMi);
+    el('rtMonthChange').innerHTML    = fmtPct(curMonMi, prevMonMi);
+}
+
 function renderRouteStats(filtered) {
     const el = id => document.getElementById(id);
+    const tbl = el('rtRecordsTable');
     if (!filtered.length) {
-        ['rtTotalMiles','rtEntries','rtAvgTrip','rtLongest'].forEach(id => el(id).textContent = '—');
+        ['rtTotalMiles','rtEntries','rtAvgTrip','rtLongest'].forEach(id => { const e = el(id); if (e) e.textContent = '—'; });
+        if (tbl) tbl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-3);font-size:0.78rem;letter-spacing:0.5px;">No records in this period</div>';
         return;
     }
     const calc = recalcMileage(filtered);
     const trips = calc.map(r => r.mileageDifference);
     const total = trips.reduce((s, t) => s + t, 0);
     el('rtTotalMiles').textContent = total.toLocaleString() + ' mi';
-    el('rtEntries').textContent = calc.length;
-    el('rtAvgTrip').textContent = (total / calc.length).toFixed(1) + ' mi';
-    el('rtLongest').textContent = Math.max(...trips).toLocaleString() + ' mi';
+    el('rtEntries').textContent    = calc.length;
+    el('rtAvgTrip').textContent    = (total / calc.length).toFixed(1) + ' mi';
+    el('rtLongest').textContent    = Math.max(...trips).toLocaleString() + ' mi';
+
+    if (!tbl) return;
+    const sorted = [...calc].sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+    tbl.innerHTML = `
+        <div style="font-size:0.65rem;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin:16px 0 8px;font-family:var(--font-display);">Records in period · ${calc.length}</div>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+                <thead>
+                    <tr style="border-bottom:1px solid var(--border-2);">
+                        <th style="text-align:left;padding:5px 8px;color:var(--text-3);font-size:0.62rem;letter-spacing:1px;text-transform:uppercase;font-family:var(--font-display);font-weight:600;">Date / Time</th>
+                        <th style="text-align:right;padding:5px 8px;color:var(--text-3);font-size:0.62rem;letter-spacing:1px;text-transform:uppercase;font-family:var(--font-display);font-weight:600;">Odometer</th>
+                        <th style="text-align:right;padding:5px 8px;color:var(--text-3);font-size:0.62rem;letter-spacing:1px;text-transform:uppercase;font-family:var(--font-display);font-weight:600;">Trip</th>
+                        <th style="text-align:right;padding:5px 8px;color:var(--text-3);font-size:0.62rem;letter-spacing:1px;text-transform:uppercase;font-family:var(--font-display);font-weight:600;">Running Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sorted.map(r => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                            <td style="padding:6px 8px;color:var(--text-2);font-family:'JetBrains Mono',monospace;font-size:0.78rem;">${r.dateTime.slice(0,16).replace('T',' ')}</td>
+                            <td style="padding:6px 8px;text-align:right;color:var(--text-1);font-family:'JetBrains Mono',monospace;font-size:0.78rem;">${r.currentMileage.toLocaleString()}</td>
+                            <td style="padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:${r.mileageDifference > 0 ? 'var(--cyan)' : 'var(--text-3)'};">${r.mileageDifference > 0 ? '+' + r.mileageDifference.toLocaleString() : '—'}</td>
+                            <td style="padding:6px 8px;text-align:right;color:var(--text-2);font-family:'JetBrains Mono',monospace;font-size:0.78rem;">${r.totalMileage.toLocaleString()}</td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>`;
 }
 
 // ── Cost Analytics ────────────────────────────────────────────────────────────

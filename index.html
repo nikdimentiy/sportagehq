@@ -1444,6 +1444,28 @@
                 <div class="panel" style="grid-column: 1 / -1;">
                     <div class="panel-header"><i class="fas fa-map-marked-alt"></i> Route Tracker</div>
                     <div class="panel-body">
+
+                        <!-- Analytics comparison: always visible -->
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px;">
+                            <div class="chip">
+                                <div class="chip-label">This Week vs Last Week</div>
+                                <div style="display:flex; align-items:baseline; gap:8px; margin-top:4px;">
+                                    <div class="chip-val" id="rtWeekCurrent">—</div>
+                                    <div id="rtWeekChange" style="font-size:0.75rem;">—</div>
+                                </div>
+                                <div style="font-size:0.62rem; color:var(--text-3); margin-top:3px;">prev: <span id="rtWeekPrev">—</span></div>
+                            </div>
+                            <div class="chip">
+                                <div class="chip-label">This Month vs Last Month</div>
+                                <div style="display:flex; align-items:baseline; gap:8px; margin-top:4px;">
+                                    <div class="chip-val" id="rtMonthCurrent">—</div>
+                                    <div id="rtMonthChange" style="font-size:0.75rem;">—</div>
+                                </div>
+                                <div style="font-size:0.62rem; color:var(--text-3); margin-top:3px;">prev: <span id="rtMonthPrev">—</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Period filter -->
                         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;">
                             <button class="btn-sm rt-filter-btn" id="rtBtnthisWeek" onclick="routeTrackerFilter('thisWeek')">This Week</button>
                             <button class="btn-sm rt-filter-btn" id="rtBtnlastWeek" onclick="routeTrackerFilter('lastWeek')">Last Week</button>
@@ -1456,12 +1478,18 @@
                             <input type="text" id="routeEndDate" placeholder="End date">
                             <button class="apply-btn" onclick="applyRouteCustomFilter()"><i class="fas fa-arrow-right"></i></button>
                         </div>
+
+                        <!-- Period stats -->
                         <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
                             <div class="chip"><div class="chip-label">Total Miles</div><div class="chip-val" id="rtTotalMiles">—</div></div>
                             <div class="chip"><div class="chip-label">Entries</div><div class="chip-val" id="rtEntries">—</div></div>
                             <div class="chip"><div class="chip-label">Avg Trip</div><div class="chip-val" id="rtAvgTrip">—</div></div>
                             <div class="chip"><div class="chip-label">Longest</div><div class="chip-val" id="rtLongest">—</div></div>
                         </div>
+
+                        <!-- Records table for selected period -->
+                        <div id="rtRecordsTable"></div>
+
                     </div>
                 </div>
             </div>

@@ -773,14 +773,57 @@
             gap: 10px;
             font-family: var(--font-mono);
             font-size: 0.72rem;
+            position: relative;
         }
-        .nav-account-email {
+        .nav-user-icon-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--cyan);
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: grid; place-items: center;
+            font-size: 1rem;
+            transition: border-color var(--transition), background var(--transition), color var(--transition);
+        }
+        .nav-user-icon-btn:hover {
+            border-color: var(--border-active);
+            background: var(--cyan-dim);
+        }
+        .user-popup {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-active);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            min-width: 200px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            z-index: 2000;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
             color: var(--cyan);
             letter-spacing: 0.5px;
-            max-width: 140px;
-            overflow: hidden;
-            text-overflow: ellipsis;
             white-space: nowrap;
+            animation: fadeUp 0.15s ease;
+        }
+        .user-popup::before {
+            content: '';
+            position: absolute;
+            top: -5px; right: 10px;
+            width: 8px; height: 8px;
+            background: var(--bg-elevated);
+            border-left: 1px solid var(--border-active);
+            border-top: 1px solid var(--border-active);
+            transform: rotate(45deg);
+        }
+        .user-popup-label {
+            font-size: 0.55rem;
+            color: var(--text-3);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
         }
         .nav-logout-btn {
             background: rgba(255,61,113,0.1);
@@ -934,7 +977,13 @@
         <button data-tab="system"><i class="fas fa-cog"></i>&nbsp; System</button>
     </div>
     <div id="navAccountContainer" class="nav-account" style="display:none;">
-        <span class="nav-account-email" id="navUserEmail"></span>
+        <button id="greetingText" class="nav-user-icon-btn" title="Account">
+            <i class="fas fa-user-circle"></i>
+        </button>
+        <div id="userPopup" class="user-popup" style="display:none;">
+            <div class="user-popup-label">Signed in as</div>
+            <span id="navUserEmail"></span>
+        </div>
         <button id="navLogoutBtn" class="nav-logout-btn"><i class="fas fa-sign-out-alt"></i> logout</button>
     </div>
 </nav>
@@ -1511,5 +1560,26 @@
 <!-- Old inline script content removed - now loaded from src/app.js -->
 
 <script type="module" src="src/services/appwrite-init.js"></script>
+
+<script>
+(function () {
+    const btn = document.getElementById('greetingText');
+    const popup = document.getElementById('userPopup');
+    if (!btn || !popup) return;
+
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.addEventListener('click', function () {
+        popup.style.display = 'none';
+    });
+
+    popup.addEventListener('click', function (e) {
+        e.stopPropagation();
+    });
+})();
+</script>
 </body>
 </html>

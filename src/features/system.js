@@ -515,52 +515,16 @@ function renderRouteStats(filtered) {
 
 export function refreshCostAnalytics() {
     const el = id => document.getElementById(id);
-    if (!el('caPeakBuyTime')) return;
+    if (!el('caCostPerMile')) return;
 
     const records = state.fuelRecords;
     const noData = '<span style="color:var(--text-3);font-size:0.8rem;">No data yet</span>';
 
     if (!records.length) {
-        ['caPeakBuyTime', 'caCostPerMile', 'caVolWeightedPrice', 'caFuelPriceTrend']
+        ['caCostPerMile', 'caVolWeightedPrice', 'caFuelPriceTrend']
             .forEach(id => { const e = el(id); if (e) e.textContent = '—'; });
         if (el('caMonthlyTable')) el('caMonthlyTable').innerHTML = noData;
         return;
-    }
-
-    // Most frequent cluster of buy time — uses r.time (HH:MM) only; $createdAt is unreliable (batch sync)
-    const timesOfDay = [];
-    records.forEach(r => {
-        if (r.time) {
-            const [h, m] = r.time.split(/[:\.]/).map(Number);
-            if (!isNaN(h) && !isNaN(m)) timesOfDay.push(h * 60 + m);
-        }
-    });
-    if (timesOfDay.length >= 2) {
-        timesOfDay.sort((a, b) => a - b);
-        // Split into clusters wherever consecutive times are > 60 min apart
-        const GAP = 60;
-        const clusters = [];
-        let cur = [timesOfDay[0]];
-        for (let i = 1; i < timesOfDay.length; i++) {
-            if (timesOfDay[i] - timesOfDay[i - 1] > GAP) { clusters.push(cur); cur = []; }
-            cur.push(timesOfDay[i]);
-        }
-        clusters.push(cur);
-        const best = clusters.reduce((a, b) => b.length > a.length ? b : a);
-        const fmtT = mins => {
-            const h = Math.floor(mins / 60), m = mins % 60;
-            return { str: `${String(h % 12 || 12).padStart(2, '0')}:${String(m).padStart(2, '0')}`, period: h < 12 ? 'AM' : 'PM' };
-        };
-        const t0 = fmtT(best[0]), t1 = fmtT(best[best.length - 1]);
-        const count = best.length;
-        const range = best.length === 1
-            ? `${t0.str} ${t0.period}`
-            : t0.period === t1.period
-                ? `${t0.str}–${t1.str} ${t0.period}`
-                : `${t0.str} ${t0.period}–${t1.str} ${t1.period}`;
-        el('caPeakBuyTime').innerHTML = `${range}<br><span style="font-size:0.62rem;font-weight:500;color:var(--text-3);letter-spacing:0.5px;">${count} purchase${count !== 1 ? 's' : ''}</span>`;
-    } else {
-        el('caPeakBuyTime').textContent = '—';
     }
 
     const totalSpend = records.reduce((s, r) => s + (r.totalCost || 0), 0);

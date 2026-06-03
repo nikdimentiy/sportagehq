@@ -92,7 +92,7 @@ export function editMaintRow(docId) {
     tr.classList.add('editing');
     const inp = (type, field, val, extra = '') =>
         `<input type="${type}" data-field="${field}" value="${esc(val != null ? val : '')}" class="row-edit-input" ${extra}>`;
-    const serviceTypes = ['Oil Change','Tire Rotation','Tire Replacement','Brake Service','Air Filter','Cabin Filter','Battery','Spark Plugs','Transmission Service','Coolant Flush','Alignment','Inspection','Scheduled Maintenance','Car Wash','Car Supplies','Other'];
+    const serviceTypes = ['Oil Change','Tire Rotation','Tire Replacement','Brake Service','Air Filter','Cabin Filter','Battery','Spark Plugs','Transmission Service','Coolant Flush','Alignment','Inspection','Scheduled Maintenance','Car Wash','Car Supplies','Insurance','Tolls','Other'];
     const typeOpts = serviceTypes.map(t => `<option value="${t}"${r.type === t ? ' selected' : ''}>${t}</option>`).join('');
     tr.innerHTML = `
         <td>${inp('date', 'date', r.date || '')}</td>
